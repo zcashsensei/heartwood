@@ -1,0 +1,33 @@
+measured: honest=0.725  hollow=0.129
+plan:     p0=0.446  p1=0.3  alpha=0.01  lambda*=0.5909  threshold=log10(1/alpha)=2
+
+FALSE POSITIVES (endpoint is honest or merely at the null boundary)
+  p=0.446 exactly at null boundary p0  FPR=0.0096   (guarantee <= 0.01)
+  p=0.700 slightly above p0            FPR=0.0000   (guarantee <= 0.01)
+  p=0.725 true honest endpoint         FPR=0.0000   (guarantee <= 0.01)
+
+DETECTION (full downgrade)
+  p=0.13  detect=1.000  median_queries=28  p90=42
+  p=0.15  detect=1.000  median_queries=31  p90=47
+  p=0.25  detect=1.000  median_queries=55  p90=98
+  p=0.35  detect=0.734  median_queries=150  p90=322
+  p=0.45  detect=0.007  median_queries=90  p90=167
+
+DILUTION SWEEP (fraction eps of traffic silently downgraded)
+    eps  mixed p  detect  median q    p90
+    1.0    0.129   1.000        28     42
+    0.9    0.189   1.000        39     58
+    0.8    0.248   1.000        55     98
+    0.7    0.308   1.000        98    222
+    0.6    0.367   0.857       325   1627
+    0.5    0.427   0.028       106    237
+    0.4    0.487   0.000        56     66
+    0.3    0.546   0.000       nan    nan
+    0.2    0.606   0.000       nan    nan
+    0.1    0.665   0.000       nan    nan
+
+COST OF THE GUARANTEE: queries needed vs confidence level
+  alpha=0.05     threshold=10^1  ~16 queries at the measured hollow rate
+  alpha=0.01     threshold=10^2  ~25 queries at the measured hollow rate
+  alpha=0.001    threshold=10^3  ~38 queries at the measured hollow rate
+  alpha=1e-06    threshold=10^6  ~75 queries at the measured hollow rate

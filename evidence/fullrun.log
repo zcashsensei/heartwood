@@ -1,0 +1,24 @@
+HEARTWOOD audit  difficulty=0  alpha=0.01  families=['state_track', 'money_chain']
+[1] calibrating claimed model on disjoint pool...
+  calibration: 23/36 = 0.639 raw, p0 (99% lower bound) = 0.446
+[2] auditing endpoint: honest
+    q= 10  rate=0.60  log10W=-0.63/2
+    q= 20  rate=0.60  log10W=-1.25/2
+    q= 30  rate=0.67  log10W=-2.43/2
+    q= 40  rate=0.72  log10W=-3.88/2
+  -> NO_EVIDENCE_OF_DEFICIT  n=40  rate=0.725  log10W=-0.17  fired_at=None  (427s)
+  -> independent verify: valid=True {'pool_commitment': True, 'beacon_selection': True, 'response_hashes': True, 'regrading': True, 'lambda_matches_plan': True, 'wealth_recomputed': True, 'verdict_consistent': True}
+[2] auditing endpoint: hollow
+    q= 10  rate=0.10  log10W=+0.74/2
+    q= 20  rate=0.30  log10W=+0.39/2
+    q= 30  rate=0.27  log10W=+0.86/2
+    q= 40  rate=0.23  log10W=+1.60/2
+  -> NO_EVIDENCE_OF_DEFICIT  n=40  rate=0.225  log10W=+1.60  fired_at=None  (182s)
+  -> independent verify: valid=True {'pool_commitment': True, 'beacon_selection': True, 'response_hashes': True, 'regrading': True, 'lambda_matches_plan': True, 'wealth_recomputed': True, 'verdict_consistent': True}
+[2] auditing endpoint: dilute
+    q= 10  rate=0.40  log10W=-0.08/2
+    q= 20  rate=0.35  log10W=+0.12/2
+    q= 30  rate=0.33  log10W=+0.31/2
+    q= 40  rate=0.33  log10W=+0.51/2
+  -> NO_EVIDENCE_OF_DEFICIT  n=40  rate=0.325  log10W=+0.72  fired_at=None  (219s)
+  -> independent verify: valid=True {'pool_commitment': True, 'beacon_selection': True, 'response_hashes': True, 'regrading': True, 'lambda_matches_plan': True, 'wealth_recomputed': True, 'verdict_consistent': True}

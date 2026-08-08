@@ -1,0 +1,18 @@
+HEARTWOOD audit  difficulty=0  alpha=0.01  families=['state_track', 'money_chain']
+[1] reusing committed p0=0.446 (no recalibration)
+[2] auditing endpoint: hollow
+    q= 10  rate=0.00  log10W=+1.02/2
+    q= 20  rate=0.05  log10W=+1.76/2
+    q= 30  rate=0.13  log10W=+1.95/2
+  -> EFFORT_DEFICIT  n=31  rate=0.129  log10W=+2.05  fired_at=31  (134s)
+  -> independent verify: valid=True {'pool_commitment': True, 'beacon_selection': True, 'response_hashes': True, 'regrading': True, 'lambda_matches_plan': True, 'wealth_recomputed': True, 'verdict_consistent': True}
+[2] auditing endpoint: dilute
+    q= 10  rate=0.20  log10W=+0.47/2
+    q= 20  rate=0.20  log10W=+0.94/2
+    q= 30  rate=0.30  log10W=+0.58/2
+    q= 40  rate=0.25  log10W=+1.33/2
+    q= 50  rate=0.32  log10W=+0.70/2
+    q= 60  rate=0.32  log10W=+0.89/2
+    q= 70  rate=0.27  log10W=+1.91/2
+  -> EFFORT_DEFICIT  n=71  rate=0.268  log10W=+2.01  fired_at=71  (438s)
+  -> independent verify: valid=True {'pool_commitment': True, 'beacon_selection': True, 'response_hashes': True, 'regrading': True, 'lambda_matches_plan': True, 'wealth_recomputed': True, 'verdict_consistent': True}
