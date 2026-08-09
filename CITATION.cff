@@ -5,7 +5,8 @@ title: >-
 message: If you use this work, please cite it.
 type: software
 authors:
-  - alias: zcashsensei
+  - given-names: George
+    family-names: Tejada
 repository-code: https://github.com/zcashsensei/heartwood
 license: MIT
 date-released: 2026-08-08
