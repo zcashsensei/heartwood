@@ -17,8 +17,24 @@ HERE = pathlib.Path(__file__).parent
 
 
 def attack(name, receipt, mutate):
+    """Run one forgery and report CAUGHT / MISSED / N-A.
+
+    N-A matters. Some attacks need a precondition in the transcript -- e.g.
+    "flip a correct answer" needs an item graded 1. Against a transcript where
+    the endpoint got everything wrong, the mutation changes nothing, the
+    unmodified receipt verifies, and a naive harness reports MISSED.
+
+    That is a false alarm, and a dangerous one: a silently-no-op attack in a
+    security suite is exactly how a REAL miss would hide. So compare the
+    receipt before and after, and only judge attacks that actually mutated
+    something.
+    """
     r = copy.deepcopy(receipt)
+    before = json.dumps(r, sort_keys=True)
     mutate(r)
+    if json.dumps(r, sort_keys=True) == before:
+        print(f"  -- N-A     {name:44s} (precondition absent; nothing mutated)")
+        return None
     v = H.verify_receipt(r)
     failed = [k for k, ok in v["checks"].items() if not ok]
     caught = not v["valid"]
@@ -133,8 +149,11 @@ def main(path):
                           receipt, provider_hides_failures))
 
     print()
-    caught, total = sum(results), len(results)
-    print(f"IN-SCOPE RESULT: {caught}/{total} attacks caught")
+    applicable = [r for r in results if r is not None]
+    skipped = len(results) - len(applicable)
+    caught, total = sum(applicable), len(applicable)
+    print(f"IN-SCOPE RESULT: {caught}/{total} applicable attacks caught"
+          + (f"  ({skipped} N-A on this transcript)" if skipped else ""))
 
     # ---------------------------------------------------------------- #
     # KNOWN BOUNDARY -- documented, not a bug.                          #

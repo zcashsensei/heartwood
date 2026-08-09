@@ -1,0 +1,79 @@
+{
+ "version": "heartwood/0.2",
+ "pool": {
+  "seed": 20260808,
+  "difficulty": 3,
+  "commitment": "3b1e0879d1736012ba771477cd19244e35ce1ea09d25d631b2dd338ed5a927f0",
+  "size": 300,
+  "families": [
+   "state_track"
+  ]
+ },
+ "beacon": {
+  "chain": "drand-mainnet-default",
+  "round": 6360376,
+  "randomness": "d1270e5b045b4aee0c72a5cad9f2b79c45ef2dd4374b2e513707792042525431",
+  "source": "drand"
+ },
+ "plan": {
+  "p0": 0.8471783050126884,
+  "p1": 0.3,
+  "alpha": 0.01,
+  "lambda": 4.226384762671466,
+  "pool_size": 300,
+  "max_queries": 60,
+  "families": [
+   "state_track"
+  ]
+ },
+ "calibration": {
+  "n": 30,
+  "successes": 30,
+  "raw_rate": 1.0,
+  "method": "wilson_lower_99"
+ },
+ "code_hash": "ef2f949efc0d2f940c68d808fff1b7abd4546697a039908958c7871250a7fc6b",
+ "transcript": [
+  {
+   "item_id": 183,
+   "served_mode": "hollow",
+   "question_sha256": "5d3820f44ddbc6bfcb3e4d03c9980b15588ed2167559b1914ff34a8595c3172b",
+   "response": "242",
+   "response_sha256": "14063697603e22d600d336bee6cff12c8be93509ce84a0642918d89b2aef1753",
+   "graded": 0
+  },
+  {
+   "item_id": 209,
+   "served_mode": "hollow",
+   "question_sha256": "7ebf22c0f69c5282ca22121186ed641d526c825e45716cd95567b068fdb0433f",
+   "response": "84,768",
+   "response_sha256": "e33ca9f14dff73f931eb8ddb0ca359c5009f6cfa478b592271c2ba931d555f19",
+   "graded": 0
+  },
+  {
+   "item_id": 161,
+   "served_mode": "hollow",
+   "question_sha256": "80626c9a07bd9099809b92bdbca666baf66173d44013541ffbd10314af729f61",
+   "response": "159",
+   "response_sha256": "ff2ccb6ba423d356bd549ed4bfb76e96976a0dcde05a09996a1cdb9f83422ec4",
+   "graded": 0
+  },
+  {
+   "item_id": 218,
+   "served_mode": "hollow",
+   "question_sha256": "e601d07549a1863b408b416a5d0b86b3bc31ef7006d846204db902a25fe5a3a8",
+   "response": "278",
+   "response_sha256": "ee62de25ccc2b55d3a0495244b246fb97055b6f1c2697d837b8e94976c03756f",
+   "graded": 0
+  }
+ ],
+ "result": {
+  "n_queries": 4,
+  "successes": 0,
+  "observed_rate": 0.0,
+  "peak_log10_wealth": 2.6436521110445392,
+  "log10_threshold": 2.0,
+  "rejected_at": 4,
+  "verdict": "EFFORT_DEFICIT"
+ }
+}

@@ -99,8 +99,23 @@ class AnthropicProvider:
     # Haiku 4.5 is the cheapest model supporting extended thinking, and it
     # takes the pre-4.6 form: {"type": "enabled", "budget_tokens": N}, which
     # must be < max_tokens and at least 1024. `effort` is rejected on 4.5.
+    #
+    # MEASURED CORRECTION: disabling `thinking` alone is NOT an effort skim.
+    # With thinking off and room to generate, the model simply reasons in the
+    # VISIBLE response instead -- measured at 110-252 output tokens and 100%
+    # accuracy across tiers 3-5, identical to thinking-enabled. That is a
+    # display change, not a compute change.
+    #
+    # Effort is tokens generated, wherever they appear. A provider skimming
+    # compute therefore suppresses deliberation everywhere: thinking off, plus
+    # a provider-injected system prompt forbidding working, plus a tight
+    # output cap. All three are invisible to the customer, whose own prompt is
+    # transmitted unchanged.
+    SKIM_SYSTEM = ("Answer immediately with only the final answer. "
+                   "Do not show any working, steps, or reasoning.")
+
     def __init__(self, model="claude-haiku-4-5", think_budget=4000,
-                 honest_max=5000, hollow_max=300, api_key=None):
+                 honest_max=5000, hollow_max=32, api_key=None):
         self.model = model
         self.think_budget = think_budget
         self.honest_max = honest_max
@@ -120,6 +135,7 @@ class AnthropicProvider:
                                 "budget_tokens": self.think_budget}
         else:
             body["max_tokens"] = self.hollow_max   # no thinking field = no thinking
+            body["system"] = self.SKIM_SYSTEM      # provider-injected, customer-invisible
 
         req = urllib.request.Request(
             self.URL, data=json.dumps(body).encode(),

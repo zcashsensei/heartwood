@@ -102,6 +102,33 @@ response hashes, regrading, the declared bet, and the verdict.
 
 ## Results
 
+### On a production frontier API
+
+Run against **Claude Haiku 4.5** through the Anthropic Messages API. Same
+model, same weights, same signed response — only the compute per request
+differs (~30× fewer tokens generated).
+
+| endpoint | verdict | queries | peak evidence |
+|---|---|---|---|
+| honest | NO_EVIDENCE_OF_DEFICIT | 60 | 10^−0.45 |
+| **effort-skimmed** | **EFFORT_DEFICIT** | **4** | 10^+2.64 |
+| **50% dilution** | **EFFORT_DEFICIT** | **14** | 10^+2.58 |
+
+All three receipts verify independently. Over 60 honest queries the evidence
+decayed to 10^−27 — no false positive, not a close call.
+
+**The sharper the model, the cheaper the audit.** A capable model fails harder
+when its compute is removed, so each query carries more evidence: full skim
+went from 31 queries on a 2B local model to **4** on Haiku 4.5, and 50%
+dilution — *undetectable* locally — is caught in 14. Total cost: a few cents.
+
+One correction worth reading: disabling `thinking` alone produced **no
+separation at all**, because the model just reasons in the visible response
+instead. Effort is tokens generated, wherever they appear. See
+[RESULTS.md](RESULTS.md).
+
+### On a local model
+
 Tested against the hard case: **identical weights, identical binary, only the
 computation per request reduced.**
 

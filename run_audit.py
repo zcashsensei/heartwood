@@ -17,6 +17,22 @@ import heartwood as H
 
 HERE = pathlib.Path(__file__).parent
 
+# Endpoint under audit. Defaults to the local Ollama path; set_provider()
+# swaps in a real API without changing any protocol logic -- the audit does
+# not care what is behind the endpoint, which is the point.
+_PROVIDER = None
+
+
+def set_provider(p):
+    global _PROVIDER
+    _PROVIDER = p
+
+
+def ask(question, mode):
+    if _PROVIDER is None:
+        return E.query(question, mode)[0]
+    return _PROVIDER.query(question, mode)[0]
+
 
 def code_hash():
     h = hashlib.sha256()
@@ -30,7 +46,7 @@ def calibrate(n, difficulty, seed, mode="honest", verbose=True, families=None):
     pool = C.make_pool(seed, n, difficulty, families)
     ok = 0
     for it in pool:
-        r, _ = E.query(it["q"], mode, seed=90000 + it["id"])
+        r = ask(it["q"], mode)
         ok += E.grade(E.extract(r), it["a"], r)
     p0 = H.lower_conf_bound(ok, n, conf=0.99)
     if verbose:
@@ -62,7 +78,7 @@ def audit(p0, p1, alpha, pool_seed, pool_size, difficulty,
         mode = "hollow" if (serve_mode == "hollow" or
                             (serve_mode == "dilute" and
                              mixer.random() < dilution)) else "honest"
-        resp, _ = E.query(it["q"], mode, seed=None)
+        resp = ask(it["q"], mode)
         g = E.grade(E.extract(resp), it["a"], resp)
         transcript.append({
             "item_id": item_id,
@@ -94,11 +110,18 @@ if __name__ == "__main__":
     ap.add_argument("--scenarios", default="honest,hollow")
     ap.add_argument("--dilution", type=float, default=0.3)
     ap.add_argument("--families", default="state_track,money_chain")
+    ap.add_argument("--provider", default="ollama",
+                    help="ollama | anthropic")
+    ap.add_argument("--model", default=None)
     ap.add_argument("--p0", type=float, default=None,
                     help="reuse an ALREADY-COMMITTED p0 instead of "
                          "recalibrating; keeps the frozen plan intact")
     a = ap.parse_args()
     fams = a.families.split(",") if a.families else None
+    if a.provider != "ollama":
+        import providers
+        kw = {"model": a.model} if a.model else {}
+        set_provider(providers.get_provider(a.provider, **kw))
 
     print(f"HEARTWOOD audit  difficulty={a.difficulty}  alpha={a.alpha}  "
           f"families={fams}")

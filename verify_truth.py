@@ -9,7 +9,7 @@ import re
 import challenges as C
 
 bad = n = 0
-for diff in (0, 1, 2, 3):
+for diff in (0, 1, 2, 3, 4, 5):
     for it in C.make_pool(999, 400, diff, ["money_chain"]):
         m = re.search(r"costs \$(\d+) and I buy (\d+).*?A (\d+)%", it["q"])
         p, q, d = map(int, m.groups())
@@ -23,7 +23,7 @@ for diff in (0, 1, 2, 3):
 print(f"money_chain : {n-bad}/{n} exact, {bad} bad")
 
 bad2 = n2 = 0
-for diff in (0, 1, 2, 3):
+for diff in (0, 1, 2, 3, 4, 5):
     for it in C.make_pool(999, 300, diff, ["state_track"]):
         m = re.match(r"Start with the number (\d+), then (.+)\. What", it["q"])
         cur = int(m.group(1))
@@ -44,7 +44,7 @@ print(f"state_track : {n2-bad2}/{n2} exact, {bad2} bad")
 
 bad3 = n3 = 0
 DAYS = C.DAYS
-for diff in (0, 1, 2, 3):
+for diff in (0, 1, 2, 3, 4, 5):
     for it in C.make_pool(999, 200, diff, ["date_offset"]):
         m = re.match(r"If today is (\w+), what day of the week is it (\d+)",
                      it["q"])

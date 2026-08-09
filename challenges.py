@@ -30,6 +30,17 @@ DIFF = {
     3: {"ops": (4, 6), "mulmax": 4, "start": (10, 99), "addmax": 19,
         "words": (7, 9), "qty": (4, 9), "price": (3, 12), "off": (9, 40),
         "grp": (30, 60)},
+    # Tiers 4-5 exist for FRONTIER models. A capability cliff is relative to
+    # the claimed model: tiers 0-3 are calibrated to a 2B local model and a
+    # frontier model solves them without spending any real compute, so they
+    # carry no evidence there. Longer dependency chains restore the cliff --
+    # each step depends on the last, so the work cannot be skipped.
+    4: {"ops": (7, 9), "mulmax": 3, "start": (10, 99), "addmax": 25,
+        "words": (9, 12), "qty": (4, 9), "price": (3, 12), "off": (20, 60),
+        "grp": (40, 90)},
+    5: {"ops": (11, 14), "mulmax": 3, "start": (10, 99), "addmax": 40,
+        "words": (11, 14), "qty": (5, 12), "price": (4, 18), "off": (30, 120),
+        "grp": (60, 140)},
 }
 
 WORDS = ["river", "candle", "orbit", "meadow", "anchor", "puzzle", "lantern",

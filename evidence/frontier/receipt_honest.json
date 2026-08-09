@@ -1,0 +1,527 @@
+{
+ "version": "heartwood/0.2",
+ "pool": {
+  "seed": 20260808,
+  "difficulty": 3,
+  "commitment": "3b1e0879d1736012ba771477cd19244e35ce1ea09d25d631b2dd338ed5a927f0",
+  "size": 300,
+  "families": [
+   "state_track"
+  ]
+ },
+ "beacon": {
+  "chain": "drand-mainnet-default",
+  "round": 6360373,
+  "randomness": "7dd4c36188ddbbd02723338bbfbe83492845e7cc42e75795d0d306f7d479cdef",
+  "source": "drand"
+ },
+ "plan": {
+  "p0": 0.8471783050126884,
+  "p1": 0.3,
+  "alpha": 0.01,
+  "lambda": 4.226384762671466,
+  "pool_size": 300,
+  "max_queries": 60,
+  "families": [
+   "state_track"
+  ]
+ },
+ "calibration": {
+  "n": 30,
+  "successes": 30,
+  "raw_rate": 1.0,
+  "method": "wilson_lower_99"
+ },
+ "code_hash": "ef2f949efc0d2f940c68d808fff1b7abd4546697a039908958c7871250a7fc6b",
+ "transcript": [
+  {
+   "item_id": 33,
+   "served_mode": "honest",
+   "question_sha256": "53ae7d6f38641da61d5efb521edc67c5d0e76ee2a03619831d5710f83386961d",
+   "response": "Let me work through this step by step:\n\n- Start: 26\n- Subtract 14: 26 - 14 = 12\n- Subtract 9: 12 - 9 = 3\n- Subtract 2: 3 - 2 = 1\n- Add 16: 1 + 16 = **17**\n\nThe final number is **17**.",
+   "response_sha256": "30879b94784a21c5cb38a4bc76a0ff202182b8704f136adb97f8093f2fe4d133",
+   "graded": 1
+  },
+  {
+   "item_id": 185,
+   "served_mode": "honest",
+   "question_sha256": "bdca362a8f3d53577a574bbce0fdb7d023d62eec61392e9f3bbcc150ba2ede05",
+   "response": "# Working through this step by step:\n\n- Start: 87\n- Multiply by 2: 87 \u00d7 2 = 174\n- Multiply by 2: 174 \u00d7 2 = 348\n- Multiply by 2: 348 \u00d7 2 = 696\n- Subtract 10: 696 - 10 = 686\n- Subtract 12: 686 - 12 = **674**\n\nYou end up with **674**.",
+   "response_sha256": "af74cdafaf39adc17e2b2160e6e758e9793b9087ea100da65dc63d337a975058",
+   "graded": 1
+  },
+  {
+   "item_id": 198,
+   "served_mode": "honest",
+   "question_sha256": "8620858d0dd73fb5cf8d4b93f13788f704ede786a0313307cb04de3ecf329337",
+   "response": "I'll work through this step by step:\n\n- Start: **52**\n- Multiply by 3: 52 \u00d7 3 = **156**\n- Add 12: 156 + 12 = **168**\n- Add 7: 168 + 7 = **175**\n- Subtract 6: 175 - 6 = **169**\n- Subtract 17: 169 - 17 = **152**\n- Add 19: 152 + 19 = **171**\n\nThe final answer is **171**.",
+   "response_sha256": "2aa2719ea842c29e56bf62631acde1e039617473649c573c211b8307457f7de5",
+   "graded": 1
+  },
+  {
+   "item_id": 123,
+   "served_mode": "honest",
+   "question_sha256": "e35aabb8f24afef52a2ad30bb26c6e8313889e7a0cb6532eeca085ca00bf7ccc",
+   "response": "Let me work through this step by step:\n\n- Start: 98\n- Subtract 18: 98 - 18 = 80\n- Add 3: 80 + 3 = 83\n- Subtract 15: 83 - 15 = 68\n- Add 12: 68 + 12 = 80\n\nYou end up with **80**.",
+   "response_sha256": "a0ad327707834632a3527ff774d8eff74133c8903b7d08d2a58df594a31a3676",
+   "graded": 1
+  },
+  {
+   "item_id": 55,
+   "served_mode": "honest",
+   "question_sha256": "2bb7be7a11a1b58c344ec30a4acb6a01d36bb91223aa6e4cdf774101ee54f70b",
+   "response": "# Step by step:\n\n1. Start: 52\n2. Multiply by 3: 52 \u00d7 3 = 156\n3. Add 10: 156 + 10 = 166\n4. Add 2: 166 + 2 = 168\n5. Add 4: 168 + 4 = 172\n6. Add 14: 172 + 14 = 186\n7. Add 12: 186 + 12 = **198**\n\nYou end up with **198**.",
+   "response_sha256": "f2f10b9c1febb30ffb51dd74423120b02d78c323a18bcc4f4d4483a3903a614b",
+   "graded": 1
+  },
+  {
+   "item_id": 81,
+   "served_mode": "honest",
+   "question_sha256": "b55ffefbf1fd409642afc1f511dc3385bc7ad40ecb9b00a3d5cf1d9414f72742",
+   "response": "I'll work through this step by step:\n\n1. Start: 63\n2. Add 2: 63 + 2 = 65\n3. Multiply by 3: 65 \u00d7 3 = 195\n4. Subtract 10: 195 - 10 = 185\n5. Add 18: 185 + 18 = 203\n6. Subtract 6: 203 - 6 = **197**\n\nThe final answer is **197**.",
+   "response_sha256": "868accab9048173455871f4a57e9bb0f2f67393ae3407a8322fb061d4dfd22fd",
+   "graded": 1
+  },
+  {
+   "item_id": 245,
+   "served_mode": "honest",
+   "question_sha256": "d59e08f9a13d9cf76f776866835dfb8522fce6d4cbe7efa3e02e2ad4ea3f96f5",
+   "response": "# Step-by-step calculation:\n\n1. Start with **11**\n2. Add 17: 11 + 17 = **28**\n3. Add 7: 28 + 7 = **35**\n4. Multiply by 2: 35 \u00d7 2 = **70**\n5. Add 5: 70 + 5 = **75**\n\nThe answer is **75**.",
+   "response_sha256": "2a785919b0ab0081290fcc280aead9eaf82f0d7316249837cbc275d20b593c98",
+   "graded": 1
+  },
+  {
+   "item_id": 120,
+   "served_mode": "honest",
+   "question_sha256": "17b130c2192a59c2b8aad8bc98cbf37b7ad7fbee1dc5691dd431df3cfbd368c3",
+   "response": "I'll work through this step by step:\n\n- Start: 63\n- Add 9: 63 + 9 = 72\n- Subtract 6: 72 - 6 = 66\n- Subtract 2: 66 - 2 = 64\n- Subtract 6: 64 - 6 = 58\n- Subtract 18: 58 - 18 = 40\n\nYou end up with **40**.",
+   "response_sha256": "adcd0a28b328c5556291e3d6d485359be2a6c143f358f180021a23fd878d1a60",
+   "graded": 1
+  },
+  {
+   "item_id": 86,
+   "served_mode": "honest",
+   "question_sha256": "b3193123d251e082d40e96475bfb16d2644ade6eb48f21f147d6b442d2b15ea6",
+   "response": "# Working through this step by step:\n\n1. Start: **23**\n2. Subtract 15: 23 - 15 = **8**\n3. Multiply by 4: 8 \u00d7 4 = **32**\n4. Add 6: 32 + 6 = **38**\n5. Multiply by 4: 38 \u00d7 4 = **152**\n6. Subtract 16: 152 - 16 = **136**\n7. Multiply by 3: 136 \u00d7 3 = **408**\n\nThe answer is **408**.",
+   "response_sha256": "48f23fa299318816160ad84213f67e8b2c781efe1eaa0e92a5022fbf7befe140",
+   "graded": 1
+  },
+  {
+   "item_id": 72,
+   "served_mode": "honest",
+   "question_sha256": "145a2bcee347070db521712883da218da41eb443d94f38ac518cb9420aaa168b",
+   "response": "# Working through the steps:\n\n1. Start: 60\n2. Multiply by 4: 60 \u00d7 4 = 240\n3. Subtract 8: 240 - 8 = 232\n4. Multiply by 3: 232 \u00d7 3 = 696\n5. Add 16: 696 + 16 = 712\n6. Add 16: 712 + 16 = **728**\n\nYou end up with **728**.",
+   "response_sha256": "12af0532e77075730cb7e94c0384dd56df6aa895050c2e339f2b94a32fc9f190",
+   "graded": 1
+  },
+  {
+   "item_id": 216,
+   "served_mode": "honest",
+   "question_sha256": "21ccf6ee74c72dddd9b4bf0c60c967d5fec3fb55189dfbef9186fd3e099fb35c",
+   "response": "I'll work through this step by step:\n\n- Start: 69\n- Multiply by 3: 69 \u00d7 3 = 207\n- Add 2: 207 + 2 = 209\n- Multiply by 4: 209 \u00d7 4 = 836\n- Subtract 12: 836 - 12 = **824**\n\nThe answer is **824**.",
+   "response_sha256": "0ad18850e200e0ce97d933839f64fb07d6ddcf8ee123ddafd8cdd7f950326ec1",
+   "graded": 1
+  },
+  {
+   "item_id": 282,
+   "served_mode": "honest",
+   "question_sha256": "8944ac65ee80f66a32942f908d6ef3d5efd041fdd6f14c6d965ceb9b1002dde0",
+   "response": "# Step-by-step calculation:\n\n- Start: 80\n- Add 4: 80 + 4 = 84\n- Multiply by 2: 84 \u00d7 2 = 168\n- Add 13: 168 + 13 = 181\n- Add 2: 181 + 2 = 183\n- Add 8: 183 + 8 = 191\n- Subtract 9: 191 - 9 = **182**\n\nThe final answer is **182**.",
+   "response_sha256": "5bed47c476c5820eb06eadf17b2817ad5383841e22cbb7f67706f8910c0be16b",
+   "graded": 1
+  },
+  {
+   "item_id": 19,
+   "served_mode": "honest",
+   "question_sha256": "32c3f610d4348f86b252be2b9aa5615300dc89a406c655f7427dac78ca28a5bd",
+   "response": "I'll work through this step-by-step:\n\n- Start: 34\n- Multiply by 3: 34 \u00d7 3 = 102\n- Subtract 12: 102 - 12 = 90\n- Add 13: 90 + 13 = 103\n- Subtract 2: 103 - 2 = 101\n- Multiply by 3: 101 \u00d7 3 = **303**\n\nThe answer is **303**.",
+   "response_sha256": "cb54b13b9eedc426d5b68f8f13c8d230a56304d98264eb0e8c59d4898dc20885",
+   "graded": 1
+  },
+  {
+   "item_id": 53,
+   "served_mode": "honest",
+   "question_sha256": "4a0f3085dad96d93d3afff7339fbdc506675b27f159d9a9624580a0221d19642",
+   "response": "# Step-by-Step Calculation\n\n1. Start: **74**\n2. Add 12: 74 + 12 = **86**\n3. Subtract 16: 86 - 16 = **70**\n4. Multiply by 2: 70 \u00d7 2 = **140**\n5. Subtract 2: 140 - 2 = **138**\n\n**Final answer: 138**",
+   "response_sha256": "6e583ba5f1690c29ab47e198809058461287ca687290484eca45448a75bb65fd",
+   "graded": 1
+  },
+  {
+   "item_id": 15,
+   "served_mode": "honest",
+   "question_sha256": "eedf8b144f44628608a0d444c9f9204f841134cca8aa9f2d70d232c3eab5476a",
+   "response": "# Step-by-step calculation:\n\n1. Start with 45\n2. Subtract 11: 45 - 11 = **34**\n3. Multiply by 4: 34 \u00d7 4 = **136**\n4. Multiply by 2: 136 \u00d7 2 = **272**\n5. Multiply by 4: 272 \u00d7 4 = **1088**\n\nThe final answer is **1088**.",
+   "response_sha256": "64c403eb23d72e55886fb41277317b84e675c1b5af8e280f06e903137ef3dec8",
+   "graded": 1
+  },
+  {
+   "item_id": 148,
+   "served_mode": "honest",
+   "question_sha256": "ba4f9749e041053406b7e51d152c93ef11c41732292b8a1c8a687f2d88c15e60",
+   "response": "# Step-by-step calculation:\n\n- Start: **67**\n- Multiply by 3: 67 \u00d7 3 = **201**\n- Add 3: 201 + 3 = **204**\n- Multiply by 2: 204 \u00d7 2 = **408**\n- Add 12: 408 + 12 = **420**\n- Add 19: 420 + 19 = **439**\n- Subtract 13: 439 - 13 = **426**\n\nYou end up with **426**.",
+   "response_sha256": "9a69216c05710180925b592f9ca4c626c7e50eee2ceb52cddc422a4dbc770ffe",
+   "graded": 1
+  },
+  {
+   "item_id": 94,
+   "served_mode": "honest",
+   "question_sha256": "3fb9b5d4b869371f97eef63ee14934be53db3f62114131c5f6f8f7e5d8f9150a",
+   "response": "# Step-by-step calculation:\n\n1. Start with 19\n2. Multiply by 4: 19 \u00d7 4 = 76\n3. Multiply by 3: 76 \u00d7 3 = 228\n4. Multiply by 3: 228 \u00d7 3 = 684\n5. Subtract 14: 684 - 14 = **670**\n\nThe answer is **670**.",
+   "response_sha256": "4f4aa982b7f5d051d72909c03dab84ddb431c9d2fc914a010bcbb4cbf8f95540",
+   "graded": 1
+  },
+  {
+   "item_id": 74,
+   "served_mode": "honest",
+   "question_sha256": "82d2a31b97381dfe1c299401e513eacfcffdf139e62cecc780a6107958db8b52",
+   "response": "Let me work through this step by step:\n\n1. Start: 80\n2. Subtract 2: 80 - 2 = 78\n3. Subtract 7: 78 - 7 = 71\n4. Multiply by 4: 71 \u00d7 4 = 284\n5. Add 14: 284 + 14 = **298**\n\nThe answer is **298**.",
+   "response_sha256": "56e336c51e3d871ca7c7209a4c1f7abaf88f2f3d86e75e8d8d9408dc921083b5",
+   "graded": 1
+  },
+  {
+   "item_id": 202,
+   "served_mode": "honest",
+   "question_sha256": "350018abc86fcc9c1bca5a3b090aca86b78300e39773b51784d8f9d62d1056d1",
+   "response": "I'll work through this step by step:\n\nStart: 69\nSubtract 2: 69 - 2 = 67\nMultiply by 4: 67 \u00d7 4 = 268\nSubtract 17: 268 - 17 = 251\nSubtract 6: 251 - 6 = **245**\n\nThe answer is **245**.",
+   "response_sha256": "821d6b301d67f6c689d733545e95669b17e4696b864424dba9c2a469baf0a4b6",
+   "graded": 1
+  },
+  {
+   "item_id": 44,
+   "served_mode": "honest",
+   "question_sha256": "d73828dfca293e01f6ec34d704f62d8b48ce1cfde85891e1e3147e0a808d221c",
+   "response": "# Working through the steps:\n\n- Start: 99\n- Add 4: 99 + 4 = 103\n- Subtract 17: 103 - 17 = 86\n- Subtract 8: 86 - 8 = 78\n- Multiply by 2: 78 \u00d7 2 = 156\n- Add 15: 156 + 15 = 171\n- Subtract 6: 171 - 6 = **165**\n\nYou end up with **165**.",
+   "response_sha256": "1e3f630feec7af701ac5deafbf293b551696395784119e9967bc6d0cfcd65fc4",
+   "graded": 1
+  },
+  {
+   "item_id": 31,
+   "served_mode": "honest",
+   "question_sha256": "68968c0488e6cdfc6cb55d7582135e819f03f39dfeb7509b92ad2d16e5dd1a54",
+   "response": "I'll work through this step-by-step:\n\n- Start: 23\n- Multiply by 3: 23 \u00d7 3 = 69\n- Multiply by 4: 69 \u00d7 4 = 276\n- Multiply by 3: 276 \u00d7 3 = 828\n- Multiply by 4: 828 \u00d7 4 = **3,312**\n\nThe answer is **3,312**.",
+   "response_sha256": "23d1404ec30d45f66bdc4c6c44e7f8c993c87a06cca41f66793a59d8b0a52323",
+   "graded": 1
+  },
+  {
+   "item_id": 213,
+   "served_mode": "honest",
+   "question_sha256": "43b35868532b5f6ea8ec15664a076367d1aa80dafc65db996d3a67824be9db6f",
+   "response": "I'll work through this step by step:\n\n- Start: 51\n- Subtract 12: 51 - 12 = 39\n- Add 4: 39 + 4 = 43\n- Subtract 4: 43 - 4 = 39\n- Subtract 7: 39 - 7 = 32\n- Add 11: 32 + 11 = 43\n- Add 6: 43 + 6 = 49\n\nYou end up with **49**.",
+   "response_sha256": "092c475d036631f28d918e46e4fb2bd85b7ff22fefd133641aa2aa083522ce65",
+   "graded": 1
+  },
+  {
+   "item_id": 6,
+   "served_mode": "honest",
+   "question_sha256": "c3c17fd3e6245e9202fb17e8037baecb922c24a4bb5ddbbcfbea9e1286a408b5",
+   "response": "Let me work through this step by step:\n\n1. Start: 17\n2. Add 19: 17 + 19 = 36\n3. Add 4: 36 + 4 = 40\n4. Multiply by 3: 40 \u00d7 3 = 120\n5. Add 9: 120 + 9 = 129\n6. Multiply by 2: 129 \u00d7 2 = **258**\n\nYou end up with **258**.",
+   "response_sha256": "d6c4d5b1b6de6982e96c38da362511c9b5c49fb984328cf8ccb772c82a4b6c0a",
+   "graded": 1
+  },
+  {
+   "item_id": 205,
+   "served_mode": "honest",
+   "question_sha256": "cfc25eead09914456064bbdcb41dbda58134f466a27610dcab2d0d8019e924ac",
+   "response": "Looking at this step by step:\n\n- Start: 53\n- Subtract 3: 53 - 3 = 50\n- Multiply by 2: 50 \u00d7 2 = 100\n- Multiply by 4: 100 \u00d7 4 = 400\n- Subtract 13: 400 - 13 = 387\n- Subtract 16: 387 - 16 = **371**\n\nThe answer is **371**.",
+   "response_sha256": "2ed8b352f5b29a4eaf3259ebd62541d60bd42333af5e658215ba342755ba3b3f",
+   "graded": 1
+  },
+  {
+   "item_id": 147,
+   "served_mode": "honest",
+   "question_sha256": "ea3ee798fb11594ec7a988c1eaa6212483ed0f7b5ae8c114cd1972073fad8051",
+   "response": "# Step-by-step calculation:\n\n- Start: 71\n- Add 14: 71 + 14 = 85\n- Multiply by 2: 85 \u00d7 2 = 170\n- Multiply by 4: 170 \u00d7 4 = 680\n- Add 8: 680 + 8 = 688\n- Add 13: 688 + 13 = 701\n- Subtract 6: 701 - 6 = **695**\n\nYou end up with **695**.",
+   "response_sha256": "25556a2818106f1d52f0909f0f7e246235b000104eea0b134c8c0adce6025a29",
+   "graded": 1
+  },
+  {
+   "item_id": 284,
+   "served_mode": "honest",
+   "question_sha256": "1381f92b8893cb38bff5d97214c8e2be08885398fa75dcf8e9aa973bb9ea2c8c",
+   "response": "I'll work through this step by step:\n\n1. Start with **23**\n2. Multiply by 3: 23 \u00d7 3 = **69**\n3. Subtract 18: 69 - 18 = **51**\n4. Multiply by 3: 51 \u00d7 3 = **153**\n5. Add 14: 153 + 14 = **167**\n\nThe final answer is **167**.",
+   "response_sha256": "f50a9e2bd1733f744061f744f14276ead59e805d38cc8516bedc992b410a10c7",
+   "graded": 1
+  },
+  {
+   "item_id": 143,
+   "served_mode": "honest",
+   "question_sha256": "b7b9dae838e9af7acdcd0d9cc18432055b34d871cc7ecac0d29fbccde610e5f8",
+   "response": "# Step-by-step calculation:\n\n- Start: 44\n- Multiply by 4: 44 \u00d7 4 = 176\n- Subtract 6: 176 - 6 = 170\n- Multiply by 2: 170 \u00d7 2 = 340\n- Add 13: 340 + 13 = 353\n- Subtract 9: 353 - 9 = 344\n- Subtract 16: 344 - 16 = **328**\n\nYou end up with **328**.",
+   "response_sha256": "f172b0b2d0ab19d83e327d526a9429d10e5b48ca7db7aae8f12716954b94345c",
+   "graded": 1
+  },
+  {
+   "item_id": 283,
+   "served_mode": "honest",
+   "question_sha256": "fc9e9cb7a958ad60eabc1efcf31c523eb96f0f3be710a1de041bf325f0c96975",
+   "response": "Let me work through this step by step:\n\n1. Start with 29\n2. Subtract 3: 29 - 3 = 26\n3. Subtract 7: 26 - 7 = 19\n4. Add 10: 19 + 10 = 29\n5. Multiply by 4: 29 \u00d7 4 = 116\n6. Subtract 3: 116 - 3 = **113**\n\nThe final answer is **113**.",
+   "response_sha256": "fb53c910f60ac324fe9b710a40191523d7ce2595b5b4410e3c0a6cc5632ee54f",
+   "graded": 1
+  },
+  {
+   "item_id": 119,
+   "served_mode": "honest",
+   "question_sha256": "b3e1de4d2dc3371465d92f78817fc73f53212a72c6d8cec7f7e8416fe0723148",
+   "response": "# Step-by-step calculation:\n\n1. Start: **22**\n2. Multiply by 4: 22 \u00d7 4 = **88**\n3. Add 11: 88 + 11 = **99**\n4. Add 15: 99 + 15 = **114**\n5. Multiply by 2: 114 \u00d7 2 = **228**\n6. Subtract 18: 228 - 18 = **210**\n7. Multiply by 3: 210 \u00d7 3 = **630**\n\nYou end up with **630**.",
+   "response_sha256": "3ad6eae4985abe96fcb294c3964bd385fd5e85f33bd91d5d5aa0fd5fe2923677",
+   "graded": 1
+  },
+  {
+   "item_id": 220,
+   "served_mode": "honest",
+   "question_sha256": "b195462cfa8c2a853cf4008655123dfe34c861059a67ec8599a915dd8f5f6e7d",
+   "response": "Let me work through this step by step:\n\n- Start: 86\n- Add 13: 86 + 13 = 99\n- Subtract 9: 99 - 9 = 90\n- Multiply by 2: 90 \u00d7 2 = 180\n- Add 17: 180 + 17 = **197**\n\nThe final number is **197**.",
+   "response_sha256": "e1ac6de2b990fb0f179f57f77f6784e1ef476d8a4ccab0613e100ef8c993d03c",
+   "graded": 1
+  },
+  {
+   "item_id": 10,
+   "served_mode": "honest",
+   "question_sha256": "8880cc3f6e950790fdb28317beedc7821cdd611b40d924317a057a8c187370d8",
+   "response": "Let me work through this step by step:\n\n1. Start with 20\n2. Subtract 16: 20 - 16 = 4\n3. Multiply by 3: 4 \u00d7 3 = 12\n4. Multiply by 3: 12 \u00d7 3 = 36\n5. Add 4: 36 + 4 = **40**\n\nThe final number is **40**.",
+   "response_sha256": "4c1705605c9c4de0262240ea9bb517031896202be2c06c56f98c07ec6bd85f30",
+   "graded": 1
+  },
+  {
+   "item_id": 211,
+   "served_mode": "honest",
+   "question_sha256": "81ceba8ac6ff5b37c67a14093038b4e0a16d4ebcf278ce9b5100b2175541998a",
+   "response": "# Working through the steps:\n\n1. Start: **13**\n2. Add 12: 13 + 12 = **25**\n3. Add 3: 25 + 3 = **28**\n4. Multiply by 2: 28 \u00d7 2 = **56**\n5. Subtract 19: 56 - 19 = **37**\n6. Multiply by 2: 37 \u00d7 2 = **74**\n7. Multiply by 3: 74 \u00d7 3 = **222**\n\nYou end up with **222**.",
+   "response_sha256": "83ac5de02e6d28a8f5cdc3046dac017e96d7f12596f5eb4e82b7ecff72614847",
+   "graded": 1
+  },
+  {
+   "item_id": 254,
+   "served_mode": "honest",
+   "question_sha256": "6d5ea4b3a4c0404f6078787120d228915e32a50ed5c141dfb300cda66cea5045",
+   "response": "# Step-by-step calculation:\n\n1. Start with 20\n2. Multiply by 4: 20 \u00d7 4 = 80\n3. Multiply by 3: 80 \u00d7 3 = 240\n4. Add 8: 240 + 8 = 248\n5. Add 7: 248 + 7 = **255**\n\nYou end up with **255**.",
+   "response_sha256": "e524178874b4cf992bb92873f9ef7f2b77cbf95556c0fa253fb96b6d1396f28c",
+   "graded": 1
+  },
+  {
+   "item_id": 7,
+   "served_mode": "honest",
+   "question_sha256": "addc40c6d3ba3bf3aa085dc1f912eed014de062bde4920cbd86d4111bd116fee",
+   "response": "I'll work through this step by step:\n\n- Start: 72\n- Add 4: 72 + 4 = 76\n- Multiply by 2: 76 \u00d7 2 = 152\n- Subtract 9: 152 - 9 = 143\n- Add 10: 143 + 10 = 153\n- Add 13: 153 + 13 = **166**\n\nThe final answer is **166**.",
+   "response_sha256": "2e98eee3dca316a390f04f1aa3699700b731acfae8f55e8634775bf21fec6ce7",
+   "graded": 1
+  },
+  {
+   "item_id": 175,
+   "served_mode": "honest",
+   "question_sha256": "0d471df4f8e766172abd9ed7ecf2382cd93b5f276cddecf9fdceefdb3d0258d3",
+   "response": "I'll work through this step by step:\n\n1. Start with: **79**\n2. Subtract 16: 79 - 16 = **63**\n3. Multiply by 4: 63 \u00d7 4 = **252**\n4. Multiply by 2: 252 \u00d7 2 = **504**\n5. Subtract 4: 504 - 4 = **500**\n\nThe answer is **500**.",
+   "response_sha256": "31da4466cfd40d856e1d87b9fb33f80e8ad39b76ce9506cea774689ce61a678a",
+   "graded": 1
+  },
+  {
+   "item_id": 136,
+   "served_mode": "honest",
+   "question_sha256": "7dcbb5d30ce28b5a61103f0e668d6f59775042f7d196952f47cdcfa9112b1412",
+   "response": "Let me work through this step by step:\n\n- Start: 16\n- Subtract 11: 16 - 11 = 5\n- Subtract 3: 5 - 3 = 2\n- Add 5: 2 + 5 = 7\n- Subtract 4: 7 - 4 = 3\n\nYou end up with **3**.",
+   "response_sha256": "265cd655cece1a0f97dee421bb13c1b2b98a7a9032e675e6f55636b9f4e9a136",
+   "graded": 1
+  },
+  {
+   "item_id": 73,
+   "served_mode": "honest",
+   "question_sha256": "e9c38397be35f074a1cfcdfb6501e6f88e3250401ccfa497fa8947249a2aa6b1",
+   "response": "I'll work through this step by step:\n\n- Start: 20\n- Subtract 6: 20 - 6 = 14\n- Multiply by 2: 14 \u00d7 2 = 28\n- Subtract 13: 28 - 13 = 15\n- Multiply by 2: 15 \u00d7 2 = 30\n- Subtract 6: 30 - 6 = **24**\n\nThe answer is **24**.",
+   "response_sha256": "f960d503ba30f0744b704045b3d3c8fd824dcc300580f47a14a0afeeb708affc",
+   "graded": 1
+  },
+  {
+   "item_id": 34,
+   "served_mode": "honest",
+   "question_sha256": "a857bc3b9f198cd80c26c88cae7bbcc04b79f3510615a6bce4a8368cb2b8b879",
+   "response": "I'll work through this step by step:\n\n- Start: 33\n- Add 10: 33 + 10 = 43\n- Add 8: 43 + 8 = 51\n- Add 18: 51 + 18 = 69\n- Multiply by 4: 69 \u00d7 4 = 276\n- Subtract 3: 276 - 3 = 273\n- Subtract 3: 273 - 3 = 270\n\nYou end up with **270**.",
+   "response_sha256": "8727ded7359c2af6b9c3c8d4b400e45cee8a2b3ec14c8ce234f72fd6976f935d",
+   "graded": 1
+  },
+  {
+   "item_id": 146,
+   "served_mode": "honest",
+   "question_sha256": "11528ea5cde517714d465933ddb3e41fa44d40e8da8cdfe926484805fcda6bda",
+   "response": "I'll work through this step by step:\n\n- Start: 18\n- Subtract 10: 18 - 10 = 8\n- Subtract 2: 8 - 2 = 6\n- Add 12: 6 + 12 = 18\n- Subtract 12: 18 - 12 = 6\n- Subtract 4: 6 - 4 = 2\n- Add 17: 2 + 17 = **19**\n\nThe answer is **19**.",
+   "response_sha256": "6ea329f1b13c9787a9b0e709ed5ff4c2904266865aa99548d92543fb40f91972",
+   "graded": 1
+  },
+  {
+   "item_id": 256,
+   "served_mode": "honest",
+   "question_sha256": "e1775ef424731f0e849b9db6d2c63ab7ed01892fb47bc3e6c8421290972d97b3",
+   "response": "Let me work through this step by step:\n\n- Start: 73\n- Add 6: 73 + 6 = 79\n- Add 5: 79 + 5 = 84\n- Add 15: 84 + 15 = 99\n- Multiply by 2: 99 \u00d7 2 = 198\n- Subtract 12: 198 - 12 = **186**\n\nThe final answer is **186**.",
+   "response_sha256": "7b00dfe2214a552684ae37dbe5cbbd495e2f140bc8cadc16cf2105c50a911967",
+   "graded": 1
+  },
+  {
+   "item_id": 207,
+   "served_mode": "honest",
+   "question_sha256": "075a455467693405e55c8657d1485077f3a1506adb0789b4c20c2b67ea22a9c7",
+   "response": "# Calculation\n\nStarting with 83:\n- 83 + 16 = 99\n- 99 + 10 = 109\n- 109 + 7 = 116\n- 116 + 2 = 118\n- 118 - 19 = 99\n- 99 - 6 = **93**\n\nThe final number is **93**.",
+   "response_sha256": "d1213b5aeaebe5d3157c32d8db192b38a7db8ce4a5f04377d32ee792246e8c19",
+   "graded": 1
+  },
+  {
+   "item_id": 169,
+   "served_mode": "honest",
+   "question_sha256": "5e76822fa7dbde1d29044e11e4e21e08559a402727300bfc95504993e4b050bc",
+   "response": "I'll work through this step-by-step:\n\n1. Start: 14\n2. Multiply by 2: 14 \u00d7 2 = 28\n3. Multiply by 4: 28 \u00d7 4 = 112\n4. Subtract 6: 112 - 6 = 106\n5. Subtract 17: 106 - 17 = **89**\n\nThe answer is **89**.",
+   "response_sha256": "76624e8737f4f539c78cf78de125ca22919de9e6bb09134a969fcb6fd3af7dc1",
+   "graded": 1
+  },
+  {
+   "item_id": 219,
+   "served_mode": "honest",
+   "question_sha256": "f84bb34f770b9360b02426c499d00f79d630b8bf5f120d30ba2847027db70742",
+   "response": "Working through this step by step:\n\n1. Start with 46\n2. Subtract 18: 46 - 18 = 28\n3. Multiply by 2: 28 \u00d7 2 = 56\n4. Multiply by 4: 56 \u00d7 4 = 224\n5. Add 5: 224 + 5 = **229**\n\nThe answer is **229**.",
+   "response_sha256": "2d8cc13bbab721c84898d21955f2a76f904127939d7ba52e1c8fd4070d53de79",
+   "graded": 1
+  },
+  {
+   "item_id": 88,
+   "served_mode": "honest",
+   "question_sha256": "542d7415e28e33df8345b5c163356f122337a33b358982dacda817ead7790946",
+   "response": "# Calculating step by step:\n\n- Start: 72\n- Subtract 9: 72 - 9 = 63\n- Subtract 17: 63 - 17 = 46\n- Subtract 15: 46 - 15 = 31\n- Add 18: 31 + 18 = 49\n- Subtract 14: 49 - 14 = **35**\n\nYou end up with **35**.",
+   "response_sha256": "2191033e56066adba73c482ebc33173a99d3efe015e52ef3de9e5117eaa3475e",
+   "graded": 1
+  },
+  {
+   "item_id": 295,
+   "served_mode": "honest",
+   "question_sha256": "451fa4da83b8d6db1d8f61b77a4d4cfc8e3896201fb4120855a0e25776887b36",
+   "response": "# Step-by-step calculation:\n\n1. Start: **88**\n2. Multiply by 3: 88 \u00d7 3 = **264**\n3. Multiply by 3: 264 \u00d7 3 = **792**\n4. Add 11: 792 + 11 = **803**\n5. Multiply by 3: 803 \u00d7 3 = **2,409**\n6. Multiply by 3: 2,409 \u00d7 3 = **7,227**\n\n**Final answer: 7,227**",
+   "response_sha256": "f6722dcde3ec0b6cb8bfe70ed660d8a5a1ad6c83a18ce87deb927fad994a3439",
+   "graded": 1
+  },
+  {
+   "item_id": 280,
+   "served_mode": "honest",
+   "question_sha256": "8d860bacd110508b18e7b957655f80449aa43b095506ca82abb2f8d270dfa310",
+   "response": "# Step-by-step calculation\n\nStarting with 13:\n- 13 - 6 = 7\n- 7 - 6 = 1\n- 1 - 2 = -1\n- -1 \u00d7 2 = **-2**\n\nThe answer is **-2**.",
+   "response_sha256": "f367c141212806d594e533777d2737b97955da903dc6b1fb26ebd4366f84cfb9",
+   "graded": 1
+  },
+  {
+   "item_id": 173,
+   "served_mode": "honest",
+   "question_sha256": "93950773621732cbd953a8e5c225202b4b942a6478dc8c28ce38e9f7c4e2e5a5",
+   "response": "Let me work through this step by step:\n\n- Start: 25\n- Add 7: 25 + 7 = 32\n- Subtract 9: 32 - 9 = 23\n- Subtract 19: 23 - 19 = 4\n- Multiply by 2: 4 \u00d7 2 = **8**\n\nYou end up with **8**.",
+   "response_sha256": "b3b459bb6bac52af4487f7fc5d24be71fb0583eb29d758ca2feb042ef15ec2b3",
+   "graded": 1
+  },
+  {
+   "item_id": 187,
+   "served_mode": "honest",
+   "question_sha256": "7f765fc2d97a118030f50e3f1f9d6519daf3334c7bd96fc1c89801edf182e98d",
+   "response": "# Step-by-step calculation:\n\n1. Start: **59**\n2. Multiply by 3: 59 \u00d7 3 = **177**\n3. Multiply by 3: 177 \u00d7 3 = **531**\n4. Subtract 3: 531 - 3 = **528**\n5. Add 9: 528 + 9 = **537**\n6. Subtract 17: 537 - 17 = **520**\n7. Subtract 9: 520 - 9 = **511**\n\nYou end up with **511**.",
+   "response_sha256": "500fe5e3ac3d6c5f82a1fdce4638c1274963622e56834fd8318e5a4912d3f422",
+   "graded": 1
+  },
+  {
+   "item_id": 130,
+   "served_mode": "honest",
+   "question_sha256": "294ab731e194234e104e4b9940c465370c231ff3c16c811a29a7839c62b10cf3",
+   "response": "# Step-by-step calculation:\n\n1. Start: 41\n2. Multiply by 2: 41 \u00d7 2 = 82\n3. Multiply by 4: 82 \u00d7 4 = 328\n4. Add 15: 328 + 15 = 343\n5. Add 6: 343 + 6 = 349\n6. Multiply by 2: 349 \u00d7 2 = **698**\n\nThe final answer is **698**.",
+   "response_sha256": "42a9a2598bb7f803e74e2bb43ede4a7800ea43378108e87009a67e04f641f6e7",
+   "graded": 1
+  },
+  {
+   "item_id": 32,
+   "served_mode": "honest",
+   "question_sha256": "f38bc4e0e59539dad34492b23847ab34da0e5af58c765f13b5b7112ca2560f32",
+   "response": "# Step-by-step calculation:\n\n1. Start: 83\n2. Multiply by 2: 83 \u00d7 2 = 166\n3. Add 8: 166 + 8 = 174\n4. Multiply by 4: 174 \u00d7 4 = 696\n5. Multiply by 3: 696 \u00d7 3 = 2,088\n6. Add 10: 2,088 + 10 = 2,098\n7. Subtract 18: 2,098 - 18 = **2,080**\n\nYou end up with **2,080**.",
+   "response_sha256": "2a8a14c2cd5fb6ff2e84a3603dcb4c7523a2b31b25390934278446600b3e712f",
+   "graded": 1
+  },
+  {
+   "item_id": 263,
+   "served_mode": "honest",
+   "question_sha256": "46bc7e1c396d2e19de321a78b709e71f1df3c60765d61cd2228ba8b2e038596c",
+   "response": "# Step by step:\n\n1. Start: **88**\n2. Multiply by 3: 88 \u00d7 3 = **264**\n3. Multiply by 4: 264 \u00d7 4 = **1,056**\n4. Subtract 19: 1,056 - 19 = **1,037**\n5. Add 12: 1,037 + 12 = **1,049**\n6. Add 9: 1,049 + 9 = **1,058**\n\n**Final answer: 1,058**",
+   "response_sha256": "80fdafc744ecada6fc366dec3bbe979082c711314698626c6d8cd48ed8f446ac",
+   "graded": 1
+  },
+  {
+   "item_id": 298,
+   "served_mode": "honest",
+   "question_sha256": "d643ba907aa7e4386b880102032cc7d3d8168232c8fef13620531c0effb78d58",
+   "response": "I'll work through this step by step:\n\n1. Start: 90\n2. Add 5: 90 + 5 = 95\n3. Subtract 12: 95 - 12 = 83\n4. Add 19: 83 + 19 = 102\n5. Multiply by 4: 102 \u00d7 4 = 408\n6. Subtract 2: 408 - 2 = 406\n7. Multiply by 4: 406 \u00d7 4 = **1,624**\n\nYou end up with **1,624**.",
+   "response_sha256": "2526f99b5ffb0b6d2fc346a6ba63d78265cd287db7b461ddd54554a0f62f4ae2",
+   "graded": 1
+  },
+  {
+   "item_id": 1,
+   "served_mode": "honest",
+   "question_sha256": "90f479c9020f957016083fc229bd7c02e22206155cd4a0cacb9d07d63a554c80",
+   "response": "# Working through this step by step:\n\n1. Start: **24**\n2. Add 16: 24 + 16 = **40**\n3. Subtract 16: 40 \u2212 16 = **24**\n4. Multiply by 2: 24 \u00d7 2 = **48**\n5. Add 13: 48 + 13 = **61**\n6. Multiply by 2: 61 \u00d7 2 = **122**\n\nYou end up with **122**.",
+   "response_sha256": "2240037265c37c5f6c167380b14a22909dacfa23750bed466ae053cc4e6f4abd",
+   "graded": 1
+  },
+  {
+   "item_id": 24,
+   "served_mode": "honest",
+   "question_sha256": "8c066f7b7757fcae4c60a7ebf315fb0afa00078d4f8fd7164b8d5769edeb8d2a",
+   "response": "# Step-by-step calculation:\n\n1. Start with: **57**\n2. Multiply by 4: 57 \u00d7 4 = **228**\n3. Add 8: 228 + 8 = **236**\n4. Subtract 13: 236 - 13 = **223**\n5. Multiply by 3: 223 \u00d7 3 = **669**\n\nThe final answer is **669**.",
+   "response_sha256": "786e22390383611f9192c7c85785b232d33ad98f672ced619574653b717a1e8f",
+   "graded": 1
+  },
+  {
+   "item_id": 126,
+   "served_mode": "honest",
+   "question_sha256": "a4f0e3924a1d065db3f9bdb0fc3ff25ce9807f5c36c47a04ab3c6a0313aedc6e",
+   "response": "# Step-by-step calculation:\n\n- Start: 81\n- Multiply by 2: 81 \u00d7 2 = 162\n- Multiply by 2: 162 \u00d7 2 = 324\n- Add 7: 324 + 7 = 331\n- Subtract 4: 331 - 4 = 327\n- Add 12: 327 + 12 = **339**\n\nThe answer is **339**.",
+   "response_sha256": "a169aede090eece267623071222cff0d213b34b7f9b2818388c50ea6cb90fb35",
+   "graded": 1
+  },
+  {
+   "item_id": 170,
+   "served_mode": "honest",
+   "question_sha256": "2e6715cb3d7c103fde49d9920b9f779e7342faa9f6f57667f3c200d1bf27a6e4",
+   "response": "# Step-by-step calculation:\n\n1. Start: 62\n2. Subtract 9: 62 - 9 = 53\n3. Subtract 16: 53 - 16 = 37\n4. Add 6: 37 + 6 = 43\n5. Multiply by 2: 43 \u00d7 2 = 86\n6. Add 11: 86 + 11 = 97\n7. Add 5: 97 + 5 = **102**\n\nYou end up with **102**.",
+   "response_sha256": "48967a05b1178c3d71be939bbc8d1a54668d76a2b86b2e415eedddda4010836b",
+   "graded": 1
+  },
+  {
+   "item_id": 180,
+   "served_mode": "honest",
+   "question_sha256": "2c5f3254730bf70c613b84be227ab54d7d9943e58a29b8a2b48f2752657dea6d",
+   "response": "# Step-by-step calculation:\n\n- Start: **71**\n- Multiply by 2: 71 \u00d7 2 = **142**\n- Multiply by 4: 142 \u00d7 4 = **568**\n- Subtract 4: 568 - 4 = **564**\n- Multiply by 4: 564 \u00d7 4 = **2,256**\n- Multiply by 2: 2,256 \u00d7 2 = **4,512**\n\nYou end up with **4,512**.",
+   "response_sha256": "78dec076d054349e1bea5578e4d72de4dad0bec1adf75d50c30bb17ee190c851",
+   "graded": 1
+  },
+  {
+   "item_id": 171,
+   "served_mode": "honest",
+   "question_sha256": "178f1945a7ff1c533b38413fd0ca11092c1816086727263f74191d29576371dc",
+   "response": "I'll work through this step-by-step:\n\n1. Start with 95\n2. Multiply by 2: 95 \u00d7 2 = 190\n3. Subtract 16: 190 - 16 = 174\n4. Add 11: 174 + 11 = 185\n5. Multiply by 3: 185 \u00d7 3 = **555**\n\nThe final number is **555**.",
+   "response_sha256": "e54a36ac3938cf2d937caed1d586ed477dcb57336b4755857ea265cbfd16f803",
+   "graded": 1
+  },
+  {
+   "item_id": 193,
+   "served_mode": "honest",
+   "question_sha256": "c501d964629f9614481457c489eed1a9a8d1719238aa8e063dab9580e2814153",
+   "response": "I'll work through this step by step:\n\n1. Start: 53\n2. Subtract 5: 53 - 5 = 48\n3. Subtract 13: 48 - 13 = 35\n4. Multiply by 4: 35 \u00d7 4 = 140\n5. Subtract 2: 140 - 2 = 138\n\nYou end up with **138**.",
+   "response_sha256": "5afa24c4c84805735f231d0cd7019a5a80bb8c93e4ae119c42a294c275ebe79b",
+   "graded": 1
+  },
+  {
+   "item_id": 154,
+   "served_mode": "honest",
+   "question_sha256": "2397ea9b608423d9beca5565566f5ab77a8eec1d4bcfd94779639f73643c3534",
+   "response": "I'll work through this step by step:\n\n- Start: 20\n- Subtract 4: 20 - 4 = 16\n- Add 11: 16 + 11 = 27\n- Add 19: 27 + 19 = 46\n- Add 10: 46 + 10 = 56\n- Subtract 9: 56 - 9 = 47\n- Multiply by 2: 47 \u00d7 2 = **94**\n\nThe answer is **94**.",
+   "response_sha256": "f7d5730b741872d3415d6e3c7085b96b063cd24eecba82cdc3d89ddd19adb9e0",
+   "graded": 1
+  }
+ ],
+ "result": {
+  "n_queries": 60,
+  "successes": 60,
+  "observed_rate": 1.0,
+  "peak_log10_wealth": -0.45085357088081035,
+  "log10_threshold": 2.0,
+  "rejected_at": null,
+  "verdict": "NO_EVIDENCE_OF_DEFICIT"
+ }
+}

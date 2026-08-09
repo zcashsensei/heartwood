@@ -153,6 +153,18 @@ provider:
 - substituting a different challenge pool
 - a provider marking every failed answer correct
 
+Re-run against a **frontier** receipt: **8/8 applicable attacks caught**, with
+3 reported N-A. Those three need an item graded 1 to mutate (flip a correct
+answer, rewrite a passed item, drop passed items), and the skimmed frontier
+endpoint got all 4 items wrong — so the mutation changed nothing and the
+unmodified receipt correctly verified.
+
+The first run reported that as **8/11 MISSED**, which was a false alarm from
+the harness, not a security regression. It is fixed: `attack()` now diffs the
+receipt before and after and reports N-A when nothing was mutated. This
+matters more than the count — **a silently-no-op attack in a security suite is
+exactly how a real miss would hide.**
+
 **Documented boundary (expected to succeed):** an auditor who fabricates a
 *fully self-consistent* transcript is **not** caught. Heartwood binds the
 auditor's protocol, not the provider's speech. Closing this requires a
@@ -204,28 +216,66 @@ One honest replication scored **0.489** — barely above the null boundary
 nowhere near the 10² threshold. That is the stress case for a false positive,
 and the supermartingale held.
 
-### Frontier scale (partially closed)
+### Frontier scale (closed — run on a production API)
 
-`providers.py` adds an endpoint adapter so Heartwood runs against real APIs,
-not just a local model. The Anthropic adapter implements the attack directly
-rather than simulating it:
+Run against **Claude Haiku 4.5 through the production Anthropic Messages API**.
+Same model, same weights, same signed response on both arms; only the serving
+configuration differs.
 
-| mode | configuration |
-|---|---|
-| honest | `thinking: {type: "enabled", budget_tokens: 4000}` |
-| hollow | thinking **omitted** (disabled) and `max_tokens` capped |
+**A measured correction first.** The adapter's original hollow mode disabled
+extended thinking and capped output at 300 tokens. It produced **no separation
+at all** — honest and hollow both scored 1.00 across tiers 3–5. The reason is
+worth stating plainly:
 
-Same model, same weights, same signed response — only the compute differs.
-This is precisely a provider silently serving `reasoning_effort: none` while
-billing for a reasoning tier. Claude Haiku 4.5 is the cheapest model
-supporting extended thinking ($1/$5 per MTok), making a full audit ≈ $0.50.
+> Disabling `thinking` is not an effort skim. With room to generate, the model
+> simply reasons in the **visible** response instead — measured at 110–252
+> output tokens and identical accuracy. That is a display change, not a
+> compute change.
 
-**Status: not yet run.** The adapter authenticates correctly (the API key is
-read from the OS keystore at point of use, never echoed or written to disk),
-but the account returned `"credit balance is too low"`. Auth and transport are
-verified; the request body has **not** been proven accepted, because billing is
-checked before a schema error would surface. Stated as unfinished rather than
-implied complete.
+**Effort is tokens generated, wherever they appear.** A provider actually
+skimming compute suppresses deliberation everywhere, so the corrected hollow
+mode does all three — thinking disabled, a provider-injected system prompt
+forbidding working, and a tight output cap. All three are invisible to the
+customer, whose own prompt is transmitted unchanged.
+
+**The capability cliff on a frontier model** (12 items per cell):
+
+| tier | honest | skimmed | separation | honest tokens | skimmed tokens |
+|---|---|---|---|---|---|
+| 2 | 1.00 | 0.42 | +0.58 | 161 | 5 |
+| **3** | **1.00** | **0.00** | **+1.00** | **222** | **6** |
+| 4 | 1.00 | 0.00 | +1.00 | 340 | 8 |
+| 5 | 1.00 | 0.00 | +1.00 | 496 | 6 |
+
+~30× less compute, and accuracy collapses from 100% to 0%.
+
+**Live audit** (difficulty 3, `state_track`, α=0.01, p1=0.30; calibration
+30/30 → p0 = 0.847):
+
+| endpoint | verdict | queries | rate | peak evidence | receipt |
+|---|---|---|---|---|---|
+| honest | NO_EVIDENCE_OF_DEFICIT | 60 | 1.000 | 10^−0.45 | valid ✓ |
+| **effort-skimmed** | **EFFORT_DEFICIT** | **4** | 0.000 | 10^+2.64 | valid ✓ |
+| **50% dilution** | **EFFORT_DEFICIT** | **14** | 0.429 | 10^+2.58 | valid ✓ |
+
+Over 60 honest queries the evidence decayed monotonically to 10^−27 — no false
+positive, and not a close call.
+
+**The sharper the model, the cheaper the audit:**
+
+| | laptop (gemma:2b) | frontier (Haiku 4.5) |
+|---|---|---|
+| full skim | 31 queries | **4** |
+| dilution | 71 queries (ε=0.7) | **14** (ε=0.5) |
+| ε=0.5 dilution | **undetectable** | **caught** |
+
+A capable model fails harder when its compute is removed, so each query
+carries more evidence. Total cost of the frontier run: a few cents.
+
+**Honest scope of the claim.** This is a real production API, a real frontier
+model, and real serving knobs — but the skim was configured by us, not caught
+in the wild. It demonstrates that the audit detects the attack, not that any
+provider is performing it.
 
 ## Test suite
 

@@ -1,0 +1,6 @@
+model=claude-haiku-4-5 think_budget=4000 honest_max=5000 hollow_max=32
+
+diff2: honest=1.00 (out_tok 161, think 152 chars)  hollow=0.42 (out_tok 5, think 0)  sep=+0.58
+diff3: honest=1.00 (out_tok 222, think 201 chars)  hollow=0.00 (out_tok 6, think 0)  sep=+1.00
+diff4: honest=1.00 (out_tok 340, think 298 chars)  hollow=0.00 (out_tok 8, think 0)  sep=+1.00
+diff5: honest=1.00 (out_tok 496, think 474 chars)  hollow=0.00 (out_tok 6, think 0)  sep=+1.00
