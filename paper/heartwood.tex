@@ -1,0 +1,628 @@
+% Heartwood: Publicly Verifiable Proof of Semantic Effort for Black-Box LLM Endpoints
+%
+% Build:  pdflatex heartwood.tex  (twice, for references)
+%
+% NOTE BEFORE SUBMITTING: arXiv requires a real author name and an
+% institutional or verifiable affiliation. Replace the placeholder below.
+\documentclass[11pt]{article}
+
+\usepackage[margin=1in]{geometry}
+\usepackage[T1]{fontenc}
+\usepackage{lmodern}
+\usepackage{amsmath,amssymb,amsthm}
+\usepackage{booktabs}
+\usepackage{url}
+\usepackage[hidelinks]{hyperref}
+\usepackage{microtype}
+
+\newtheorem{theorem}{Theorem}
+\newtheorem{proposition}{Proposition}
+\theoremstyle{definition}
+\newtheorem{definition}{Definition}
+
+\title{Heartwood: Publicly Verifiable Proof of Semantic Effort\\
+for Black-Box LLM Endpoints}
+
+\author{zcashsensei\thanks{Correspondence via
+\url{https://github.com/zcashsensei/heartwood}. Reference implementation,
+receipts, and all evaluation artefacts are MIT-licensed and public.}}
+
+\date{August 2026}
+
+\begin{document}
+\maketitle
+
+\begin{abstract}
+A customer calling a hosted language model cannot tell how much computation the
+provider actually spent on their request. Existing verification layers each bind
+a different object and none binds effort: trusted-execution attestation binds the
+hardware and the loaded image, zero-knowledge proofs of inference bind the
+architecture and committed weights, and signed-response provenance binds a
+signature chain. The Hollow-LLM attack establishes that this is not an
+engineering gap but a structural one --- ``proof of correct inference is not
+proof of large-model execution'' --- because a prover can satisfy the circuit
+while collapsing the effective computation. Behavioural auditing does measure
+capability, but the state of the art states its own limitation plainly: such
+audits are auditor-centric, with no mechanism for independent verification and
+no use of cryptographic commitment or public randomness.
+
+We close the gap between these two literatures. Our observation is that
+\emph{a correct answer to a problem requiring $N$ sequential steps is itself
+evidence that $N$ steps were spent}: effort can be bound semantically, in the
+output, where cryptography provably cannot bind it in the computation. We make
+that evidence transferable by committing a challenge pool before a public
+randomness beacon selects which items are used, and by accumulating evidence as
+an anytime-valid test supermartingale, so neither cherry-picking nor optional
+stopping can bias the result. The output is a \emph{receipt} that any third
+party recomputes offline, with no contact with the auditor or the provider and
+no cooperation from the provider at any point.
+
+On production frontier APIs, Heartwood detects a full effort skim on Claude
+Opus~5 in $4$ queries and on Claude Haiku~4.5 in $4$ queries at
+$\alpha = 0.01$, with no false positive across $105$ honest queries. We report a
+property we did not anticipate: the audit becomes \emph{cheaper} on more capable
+models, from $31$ queries on a 2B local model to $4$ on frontier models, because
+a capable model fails harder when its compute is removed. We also report two
+negative results that constrain the method --- disabling a reasoning parameter
+is not by itself an effort skim, and a degradation milder than the declared
+tolerance is not detected --- and we publish the receipts for both.
+\end{abstract}
+
+\section{Introduction}
+
+Hosted language models are sold as a named capability. A customer pays for a
+particular model at a particular reasoning tier and receives text. What the
+customer cannot observe is the quantity of computation the provider spent
+producing that text. The provider controls the reasoning budget, the sampling
+configuration, the output cap, and any injected system context; none of these is
+visible in the response, and all of them change cost.
+
+This is not a hypothetical concern. Reasoning tokens are documented as silently
+dropped by some models routed through gateways, and at least one major model
+family defaults its reasoning-effort parameter to \texttt{none}, so client code
+that reasoned under a previous version silently stops. Measurement studies of
+LLM gateways report silent downgrades, model switches, and endpoints that fail
+fingerprint verification.
+
+The verification stack that has grown up around hosted inference does not
+address this. Each layer binds a different object:
+
+\begin{itemize}
+\item \textbf{Environment attestation} (confidential-computing GPUs, TEEs,
+transparency-logged enclaves) binds hardware, firmware, and the loaded binary
+image.
+\item \textbf{Proof of inference} (zkML) binds an output to a declared
+architecture under committed weights.
+\item \textbf{Transport provenance} (signed API attestations, TLS-transcript
+proofs) binds a signature chain over request and response.
+\item \textbf{Behavioural auditing} binds the served model's output
+distribution to a reference.
+\end{itemize}
+
+\noindent Under a \emph{silent reasoning-effort downgrade} --- genuine model,
+genuine weights, genuine binary, less computation --- the first three layers
+\emph{pass}. The image is unchanged, the weights are genuinely the committed
+ones, and the provider signs an honest response to a request it really served.
+
+The Hollow-LLM attack shows the cryptographic layers cannot be repaired to cover
+this. A prover may declare a large architecture, commit to weights whose
+algebraic structure collapses the effective computation, execute only the small
+model, and still satisfy the verifier. The authors name this the \emph{effort
+gap} and observe that the natural defences either destroy the privacy the proof
+was for, or fall back on hardware trust.
+
+The behavioural literature measures capability directly and so is not subject to
+that impossibility. But it answers a different question --- \emph{which model is
+this?} --- using stylistic and distributional fingerprints, and its evidence does
+not leave the auditor. IRIS, the most advanced work in this line, states the
+limitation of its own method: no mechanism allows independent verification, the
+audit is auditor-centric, and no cryptographic commitment or public randomness is
+used.
+
+\paragraph{Contribution.} We take the gap between these literatures seriously
+and close it. Concretely:
+
+\begin{enumerate}
+\item \textbf{Semantic effort binding.} We bind effort in the output rather than
+in the computation, via task success at the \emph{capability cliff} --- the
+difficulty band where the claimed model reliably succeeds and a low-effort
+substitute does not. Correctness on a problem requiring $N$ sequential steps is
+evidence that $N$ steps were taken. This sidesteps the Hollow-LLM impossibility
+by leaving the frame in which it holds.
+
+\item \textbf{Transferable evidence.} We make a behavioural audit publicly
+verifiable by committing the challenge pool before a public randomness beacon
+selects the sample, and by accumulating evidence with an anytime-valid test
+supermartingale. The result is a receipt recomputable offline by anyone.
+
+\item \textbf{Zero provider cooperation.} The protocol requires nothing of the
+provider --- no new endpoint, no signature, no attestation, not even awareness
+that an audit is occurring.
+
+\item \textbf{Evaluation on production frontier APIs}, with all receipts,
+transcripts, and negative results published.
+\end{enumerate}
+
+\paragraph{What is not new.} No component of Heartwood is novel in isolation.
+Betting martingales and e-values are standard; public randomness beacons,
+commit-reveal, and black-box LLM auditing all pre-date this work. The
+contribution is the composition and the target: pointing a capability test at
+\emph{effort}, and making its output transferable.
+
+\section{Related Work}
+
+\paragraph{The effort gap.} Hollow-LLM formalises the central obstacle: a
+zero-knowledge proof certifies consistency with a committed witness under a
+declared computation, but that guarantee ``does not inherently bind the amount of
+computation actually expended.'' Proposed mitigations---sparsity proofs,
+behavioural challenge tests, or retreating to TEEs---are each noted by the
+authors as insufficient or as sacrificing the properties the proof was for.
+Practical zkML systems remain orders of magnitude too slow for frontier-scale
+inference independently of this issue.
+
+\paragraph{Attestation.} Confidential-computing deployments attest hardware,
+firmware, and the loaded image; some commercial offerings additionally attest the
+served weights. Transparency-logged designs such as Apple's Private Cloud Compute
+add verifiable release logs, but serve the operator's own products rather than
+third-party API customers. None of these attests computation \emph{per request},
+which is what the downgrade attack manipulates.
+
+\paragraph{Signed provenance.} Non-intrusive attestation extensions bind a
+request commitment to an output commitment with issuer signatures, and explicitly
+disclaim proving ``exact model weights or hardware configuration.''
+TLS-transcript proofs can bind a response to a session, but current constructions
+are designated-verifier: convincing a third party still requires trusting the
+notary.
+
+\paragraph{Behavioural auditing.} Model-substitution detection, rank-based
+uniformity testing, and gateway auditing all measure the served distribution
+against a reference. These methods are semantically meaningful but, as IRIS
+records, produce auditor-centric evidence: a third party cannot verify the audit
+without trusting the auditor's frozen plan. Fingerprinting work identifies model
+versions from a small number of interactions, again targeting identity rather
+than effort.
+
+\paragraph{Anytime-valid inference.} Testing by betting, e-values, and test
+supermartingales provide type-I control at arbitrary stopping times. These tools
+have been applied to auditing settings, including API evaluation under budget
+constraints. We use them off the shelf; our contribution is what we bet on and
+what we bind the bet to.
+
+\paragraph{Verified randomness in audits.} Trustless-audit constructions use
+public randomness with zero-knowledge proofs to audit training data and model
+internals, assuming access to the model. Heartwood targets the black-box API
+setting, where no such access exists.
+
+\section{Threat Model}
+
+\paragraph{Parties.} A \emph{provider} serves a hosted model and is untrusted.
+An \emph{auditor} runs the protocol and is \emph{also} untrusted --- making the
+auditor untrusted is the point of the construction. A \emph{verifier} is any
+third party who later checks the receipt. A public randomness \emph{beacon} is
+trusted only for unpredictability.
+
+\paragraph{Attack.} The provider serves the claimed model with reduced
+computation per request: a lowered or disabled reasoning budget, a tightened
+output cap, an injected system instruction suppressing deliberation, or any
+combination. The customer's prompt is transmitted unchanged. We stress that
+\emph{effort is tokens generated, wherever they appear} --- a configuration that
+merely relocates reasoning from a hidden channel to the visible response is not
+an effort skim, a point we establish empirically in
+Section~\ref{sec:negative}.
+
+\paragraph{Goal.} Produce evidence, checkable by a party who trusts neither the
+provider nor the auditor, that the endpoint's capability is materially below the
+claimed model's calibrated capability.
+
+\paragraph{Out of scope.} Heartwood binds the \emph{auditor's protocol}, not the
+\emph{provider's speech}. A dishonest auditor who fabricates a fully
+self-consistent transcript produces a receipt that verifies. Closing this
+requires a transport-binding layer, and the two compose cleanly: signed
+provenance establishes ``the provider really said this,'' while Heartwood
+establishes ``what was said required the compute.'' We demonstrate the
+fabrication attack rather than omitting it.
+
+\section{The Heartwood Protocol}
+
+\subsection{Phase order}
+
+The security of the construction rests on the order of five phases. An
+implementation that reorders them is not Heartwood.
+
+\begin{enumerate}
+\item \textbf{Calibrate.} Estimate the claimed model's success rate on a pool
+\emph{disjoint} from the audit pool, and select the capability band. Set $p_0$ to
+a conservative lower confidence bound (we use a $99\%$ Wilson bound). The
+direction matters: overstating $p_0$ would make honest endpoints look guilty, so
+the bound biases the test \emph{against} finding fault.
+
+\item \textbf{Commit.} Publish $C = H(\text{pool})$, a hash over every question
+\emph{and} its ground-truth answer, before any query is sent. Binding the answers
+prevents an auditor from later re-interpreting what ``correct'' meant.
+
+\item \textbf{Bind to a beacon.} Obtain a public randomness value $R$ published
+\emph{after} $C$. The item order is derived from $H(C \parallel R)$.
+
+\item \textbf{Audit.} Query items in the derived order, grade each
+deterministically, and accumulate evidence.
+
+\item \textbf{Emit a receipt} containing the seed, commitment, beacon round,
+frozen plan, full transcript, and result.
+\end{enumerate}
+
+\noindent Committing before the beacon exists is what removes control of the
+sample from both parties simultaneously: the auditor cannot select a favourable
+subset because $R$ did not exist at commit time, and the provider cannot predict
+which requests are audits.
+
+\subsection{Challenge construction}
+
+Items are drawn from families with machine-checkable ground truth (sequential
+state tracking, multi-step arithmetic with an exactness constraint, positional
+lookup, modular date arithmetic, inclusion--exclusion counting), parameterised by
+a difficulty tier. Grading is deterministic and re-runnable from the response
+text alone; any LLM-judge or nondeterministic grader would break verifiability,
+since the verifier could not reproduce the graded bit.
+
+Two properties matter. First, items must require genuine \emph{sequential} work,
+so that the computation cannot be skipped. Second, and less obviously, difficulty
+must be calibrated to the \emph{claimed model}: an item the claimed model cannot
+solve carries no evidence, because it fails whether the endpoint is honest or
+skimmed. We return to this in Section~\ref{sec:cliff}, where it is the dominant
+empirical effect.
+
+\subsection{Deterministic, language-independent derivations}
+
+Both derivations a verifier must reproduce --- the item order and the pool itself
+--- are specified without reference to any language's random number generator.
+The random source is HMAC-SHA256 in counter mode; indices are drawn by rejection
+sampling to avoid modulo bias; the order is Fisher--Yates. Pool items draw from
+the same stream keyed by a per-item seed. Cross-language test vectors are
+published for both. This is a correctness requirement rather than an aesthetic
+one: an earlier version of this work specified only the shuffle and left pool
+generation on CPython's Mersenne Twister, which silently made receipts
+verifiable only under CPython.
+
+\section{Statistical Guarantee}
+
+\subsection{Null hypothesis}
+
+Let $x_t \in \{0,1\}$ indicate whether the endpoint answered item $t$ correctly.
+The null is capability-based and one-sided:
+\[
+H_0 : \; \mathbb{E}[x_t \mid \mathcal{F}_{t-1}] \;\ge\; p_0 ,
+\]
+that is, \emph{the endpoint is at least as capable as the claimed model}.
+
+\subsection{The bet}
+
+Fix a declared tolerance $p_1 < p_0$: the success rate at or below which the
+customer considers the service materially degraded. Define
+\[
+e_t \;=\; 1 + \lambda\,(p_0 - x_t), \qquad
+W_T \;=\; \prod_{t=1}^{T} e_t , \qquad
+\lambda \in \Big[0, \tfrac{1}{1-p_0}\Big).
+\]
+
+\begin{proposition}
+Under $H_0$, $W_T$ is a non-negative supermartingale with $W_0 = 1$.
+\end{proposition}
+
+\begin{proof}
+$e_t > 0$ for $\lambda < 1/(1-p_0)$, so $W_T \ge 0$. Since $\lambda$ is
+predictable,
+$\mathbb{E}[e_t \mid \mathcal{F}_{t-1}] = 1 + \lambda(p_0 - \mathbb{E}[x_t \mid
+\mathcal{F}_{t-1}]) \le 1$ whenever $\mathbb{E}[x_t \mid \mathcal{F}_{t-1}] \ge
+p_0$. Hence $\mathbb{E}[W_T \mid \mathcal{F}_{T-1}] \le W_{T-1}$.
+\end{proof}
+
+\begin{theorem}[Anytime validity]
+For any stopping time $\tau$ and any $\alpha \in (0,1)$,
+$\;\Pr_{H_0}\big[\,\exists\, T : W_T \ge 1/\alpha \,\big] \le \alpha$.
+\end{theorem}
+
+\begin{proof}
+Immediate from Ville's inequality applied to the non-negative supermartingale
+$W_T$ with $W_0 = 1$.
+\end{proof}
+
+\noindent This is the property that makes the stopping rule safe to publish. The
+auditor may stop whenever they wish --- including after seeing the data, or by
+continuing an inconclusive audit later --- without inflating type-I error.
+Optional continuation is therefore free, provided the plan
+$(p_0, p_1, \alpha, \lambda)$ and the pool are unchanged.
+
+\subsection{Choosing $\lambda$}
+
+Maximising the expected log-growth of $W$ under the alternative $p_1$ gives a
+closed form:
+\[
+\lambda^\star \;=\; \frac{p_0 - p_1}{p_0\,(1 - p_0)} .
+\]
+$\lambda^\star$ is fixed by the plan before the audit and recomputed by the
+verifier from $(p_0, p_1)$; a receipt whose stated $\lambda$ disagrees is
+rejected. This is what prevents re-tuning the bet after seeing outcomes.
+
+\subsection{Interpreting a negative result}
+
+A negative result is \emph{not} a certificate of honest service. It means: no
+degradation beyond $p_1$ was detected within the queries spent. Sensitivity is
+exactly what the auditor declares --- a point we demonstrate empirically in
+Section~\ref{sec:negative} rather than merely assert.
+
+\section{Verification}
+
+A verifier performs seven checks, all offline:
+
+\begin{enumerate}\itemsep2pt
+\item regenerate the pool from the seed and confirm the commitment;
+\item re-derive the beacon-bound order and confirm it matches the transcript
+prefix (this single check defeats cherry-picking, reordering, and beacon
+substitution simultaneously);
+\item confirm each response hash;
+\item re-grade every response;
+\item recompute $\lambda$ from the declared $(p_0,p_1)$;
+\item recompute the wealth path;
+\item recompute the first crossing and the verdict.
+\end{enumerate}
+
+\noindent The verifier contacts neither the auditor nor the provider and
+requires no network access. In our reference implementation the entire
+verification path uses only the language's standard library.
+
+\section{Evaluation}
+
+\subsection{Setup}
+
+We evaluate against a local 2B model (\texttt{gemma:2b} via Ollama, CPU-only) and
+two production frontier endpoints on the Anthropic Messages API
+(\texttt{claude-haiku-4-5} and \texttt{claude-opus-5}). In every configuration
+the honest and skimmed arms serve \emph{the same model with the same weights};
+only the serving configuration differs, and the customer's prompt is transmitted
+unchanged. The skimmed arm disables reasoning, injects a system instruction
+forbidding working, and caps output.
+
+\subsection{The capability cliff is model-relative}
+\label{sec:cliff}
+
+Table~\ref{tab:cliff} reports accuracy by difficulty tier for both frontier
+models, 12 items per cell.
+
+\begin{table}[t]
+\centering
+\begin{tabular}{lcccc}
+\toprule
+& \multicolumn{2}{c}{Haiku 4.5} & \multicolumn{2}{c}{Opus 5} \\
+\cmidrule(lr){2-3}\cmidrule(lr){4-5}
+Tier & honest & skimmed & honest & skimmed \\
+\midrule
+2 & 1.00 & 0.42 & --- & --- \\
+3 & 1.00 & 0.00 & 1.00 & \textbf{1.00} \\
+5 & 1.00 & 0.00 & 1.00 & 0.00 \\
+\bottomrule
+\end{tabular}
+\caption{Accuracy by difficulty tier. Opus~5 solves an 8-step chain in
+\emph{3 output tokens} with no deliberation, so at tier 3 the skimmed endpoint
+also scores $1.00$ and every query is uninformative. The cliff appears only at
+tier 5.}
+\label{tab:cliff}
+\end{table}
+
+This is the dominant practical finding. The capability band is a property of the
+\emph{claimed model}, not of the protocol. An auditor who reuses a difficulty
+tier calibrated for a weaker model obtains a well-formed receipt containing no
+information. Calibration is not setup; it is load-bearing.
+
+\subsection{Detection on production frontier APIs}
+
+Table~\ref{tab:frontier} reports live audits at $\alpha = 0.01$.
+
+\begin{table}[t]
+\centering
+\begin{tabular}{llcrrr}
+\toprule
+Model & Endpoint & $p_1$ & Queries & Rate & $\log_{10} W$ \\
+\midrule
+Haiku 4.5 & honest         & 0.30 & 60 & 1.000 & $-0.45$ \\
+Haiku 4.5 & \textbf{skimmed} & 0.30 & \textbf{4}  & 0.000 & $+2.64$ \\
+Haiku 4.5 & \textbf{50\% dilution} & 0.30 & \textbf{14} & 0.429 & $+2.58$ \\
+\midrule
+Opus 5 & honest            & 0.30 & 45 & 0.978 & $-0.42$ \\
+Opus 5 & \textbf{skimmed}  & 0.30 & \textbf{4}  & 0.000 & $+2.07$ \\
+Opus 5 & 50\% dilution     & 0.30 & 45 & 0.600 & $+0.49$ \\
+Opus 5 & \textbf{50\% dilution} & 0.65 & \textbf{33} & 0.515 & $+2.04$ \\
+\bottomrule
+\end{tabular}
+\caption{Live audits. Bold rows fired ($W \ge 1/\alpha = 10^2$). No honest arm
+produced a false positive; the Haiku honest arm's evidence decayed monotonically
+to $10^{-27}$ over 60 queries.}
+\label{tab:frontier}
+\end{table}
+
+\subsection{The audit is cheaper on more capable models}
+
+Detection cost \emph{falls} as the claimed model becomes more capable:
+
+\begin{center}
+\begin{tabular}{lcc}
+\toprule
+Claimed model & full skim & 50\% dilution \\
+\midrule
+gemma 2B    & 31 queries & not detected \\
+Haiku 4.5   & \textbf{4} & \textbf{14} \\
+Opus 5      & \textbf{4} & 33 ($p_1 = 0.65$) \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+\noindent We did not anticipate this. A more capable model fails \emph{harder}
+when its computation is removed --- the gap between its honest and skimmed
+accuracy widens --- so each query carries more evidence. Verification methods
+typically become more expensive as models scale; this one becomes cheaper,
+which is favourable precisely on the expensive endpoints a customer most wants
+to verify.
+
+\subsection{Style versus capability}
+
+A naive skim that returns short answers is separable by a response-length
+classifier alone (AUC $0.941$) and therefore demonstrates nothing. Against a
+\emph{padded} skimmer --- one that commits to an answer before deliberating and
+then emits a fluent, normal-length justification --- a length classifier
+performs at chance (AUC $0.523$) while accuracy separates $0.750$ against
+$0.208$.
+
+Style is cheap to fake; capability is not. An adversary can reproduce surface
+statistics at negligible cost, but cannot produce a correct answer to a problem
+it did not compute. The cheapest way to pass a capability test is to do the
+work, which makes the test adversarially robust by construction rather than by
+obscurity.
+
+\subsection{Replication and error control}
+
+Across independent audits on the local model, each with its own pool seed and
+beacon-derived order, $5/5$ skims were detected at queries
+$\{23, 26, 28, 28, 34\}$ (median $28$) and $0/3$ honest endpoints produced false
+positives. A Monte Carlo of the same plan predicted a median of $28$ and a 90th
+percentile of $42$; theory and practice agreed without tuning. Simulated
+false-positive rate at the null boundary was $0.0096$ against a nominal
+$\alpha = 0.01$. One honest replication realised a success rate of $0.489$,
+marginally above $p_0 = 0.446$; its evidence reached only $10^{+0.10}$, far from
+the $10^{2}$ threshold.
+
+\subsection{Two negative results}
+\label{sec:negative}
+
+We report both, and publish the receipts.
+
+\paragraph{Disabling a reasoning parameter is not an effort skim.} Our first
+frontier configuration disabled extended thinking and capped output at 300
+tokens. It produced \emph{no separation whatsoever}: honest and skimmed arms both
+scored $1.00$ across tiers 3--5. With room to generate, the model simply reasoned
+in the \emph{visible} response instead, at 110--252 output tokens and unchanged
+accuracy. This is a display change, not a compute change. Effort is tokens
+generated wherever they appear, and a threat model that equates ``reasoning
+disabled'' with ``less compute'' is wrong.
+
+\paragraph{Degradation milder than the declared tolerance is not detected.} On
+Opus~5, a 50\% dilution realised a mixed success rate of $0.600$ --- milder than
+the declared tolerance $p_1 = 0.30$ --- so the bet drifted negative and never
+fired within 45 queries. Re-declaring $p_1 = 0.65$ as a separate pre-declared
+plan caught the same endpoint in 33 queries. Sensitivity is exactly what the
+auditor declares; a milder tolerance costs queries and buys sensitivity.
+
+\subsection{Forgery resistance}
+
+Against real receipts, the verifier catches every in-scope forgery we
+constructed: flipping a graded bit, rewriting a response, rewriting a response
+together with its hash and grade, dropping items the endpoint passed, reordering
+items, substituting a beacon, inflating $p_0$, re-tuning $\lambda$, restating the
+verdict, substituting the pool, and marking all failures as successes. As stated
+in the threat model, a fully self-consistent fabricated transcript is \emph{not}
+caught; we include that attack in the suite as a documented boundary.
+
+\section{Limitations}
+
+\begin{enumerate}\itemsep3pt
+\item \textbf{Provider speech is unbound.} Heartwood proves the auditor followed
+the protocol, not that the provider produced the responses. Composition with
+signed provenance or a TLS-transcript proof is required; current
+TLS-transcript constructions are themselves designated-verifier.
+
+\item \textbf{A negative result is weak.} It bounds degradation at the declared
+tolerance over the queries spent; it is not a certificate of honest service.
+
+\item \textbf{Behaviourally identical substitution is undetectable.} We argue
+behavioural equivalence is the correct equivalence class for an API customer,
+but this is a real limit rather than a strength.
+
+\item \textbf{Calibration is required per claimed model} and consumes queries
+against the honest endpoint. A miscalibrated tier yields a valid receipt
+containing no information.
+
+\item \textbf{Indistinguishability is argued, not proven.} Our challenges are
+ordinary word problems, a common category of API traffic, but a provider
+profiling one customer's distribution could detect a shift. Generating
+capability-cliff items in the customer's own domain is future work.
+
+\item \textbf{The skim was configured by us}, not observed in the wild. The
+experiments show the audit detects the attack; they do not show any provider
+performs it.
+
+\item \textbf{The statistical machinery is standard.} The contribution is the
+composition and the threat model, not the test.
+\end{enumerate}
+
+\section{Conclusion}
+
+Cryptography cannot bind computational effort, and behavioural audits cannot
+transfer. Heartwood bridges the two: it binds effort semantically, at the
+capability cliff where an answer is reachable only by spending the computation,
+and it makes the resulting evidence transferable by committing the challenge pool
+before a public beacon selects the sample and by accumulating evidence with an
+anytime-valid supermartingale. The construction requires no cooperation from the
+provider, and its receipts are recomputable offline using only a standard
+library.
+
+The property we find most promising is the one we did not design for: the audit
+grows cheaper as the claimed model grows more capable. Verification usually
+scales the wrong way. Here it scales toward exactly the endpoints whose cost
+makes verification worth doing.
+
+\paragraph{Artefacts.} The reference implementation, protocol specification,
+cross-language test vectors, every receipt reported here (including the two
+negative results), and the full adversary suite are public and MIT-licensed at
+\url{https://github.com/zcashsensei/heartwood}.
+
+\begin{thebibliography}{99}\small
+
+\bibitem{hollowllm} Hollow-LLM Attack: Computationally Trivial Weights in
+Zero-Knowledge Verification of LLM Inference. arXiv:2607.28884, 2026.
+
+\bibitem{iris} Which Model Is Actually Serving You? IRIS: Budgeted Black-Box
+Auditing of Model Substitution and Routing Dilution in LLM Gateways.
+arXiv:2607.20860, 2026.
+
+\bibitem{rut} Auditing Black-Box LLM APIs with a Rank-Based Uniformity Test.
+arXiv:2506.06975, 2025.
+
+\bibitem{payfor} Are You Getting What You Pay For? Auditing Model Substitution
+in LLM APIs. arXiv:2504.04715, 2025.
+
+\bibitem{aex} AEX: Non-Intrusive Multi-Hop Attestation and Provenance for LLM
+APIs. arXiv:2603.14283, 2026.
+
+\bibitem{llmmap} LLMmap: Fingerprinting for Large Language Models.
+arXiv:2407.15847, 2024.
+
+\bibitem{zkllm} zkLLM: Zero-Knowledge Proofs for Large Language Models. 2024.
+
+\bibitem{nanozk} NANOZK: Layerwise Zero-Knowledge Proofs for Verifiable Large
+Language Model Inference. arXiv:2603.18046, 2026.
+
+\bibitem{pcc} Apple Security Engineering. Private Cloud Compute: A New Frontier
+for AI Privacy in the Cloud. 2024.
+
+\bibitem{zkaudit} Trustless Audits without Revealing Data or Models.
+arXiv:2404.04500, 2024.
+
+\bibitem{ramdas} A.~Ramdas, J.~Ville, and collaborators. Hypothesis testing with
+e-values, martingales and betting. Tutorial and survey, 2024.
+
+\bibitem{wsr} I.~Waudby-Smith and A.~Ramdas. Estimating means of bounded random
+variables by betting. \emph{JRSS-B}, 2023.
+
+\bibitem{ville} J.~Ville. \emph{\'Etude critique de la notion de collectif}.
+Gauthier-Villars, 1939.
+
+\bibitem{drand} drand: A Distributed Randomness Beacon Daemon.
+\url{https://drand.love}.
+
+\bibitem{tlsn} TLSNotary. Zero-knowledge $\neq$ trustless: what ``publicly
+verifiable'' means for zkTLS. 2026.
+
+\bibitem{sok} SoK: Market Microstructure and Verification for Decentralized
+Inference. arXiv:2510.15612, 2025.
+
+\end{thebibliography}
+
+\end{document}
