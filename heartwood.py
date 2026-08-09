@@ -53,12 +53,12 @@ WHAT THE RECEIPT PROVES, AND WHAT IT DOES NOT
 import hashlib
 import json
 import math
-import random
 import urllib.request
 
 import challenges as C
+import portable
 
-VERSION = "heartwood/0.1"
+VERSION = "heartwood/0.2"
 DRAND_URL = "https://api.drand.sh/public/{round}"
 DRAND_CHAIN = "drand-mainnet-default"
 
@@ -78,18 +78,33 @@ def fetch_beacon(round_no=None):
                 "randomness": None, "source": f"offline:{type(e).__name__}"}
 
 
-def selection_order(pool_commitment: str, beacon: dict, n: int):
+def selection_order(pool_commitment: str, beacon: dict, n: int,
+                    version: str = VERSION):
     """Which items get used, and in what order.
 
     Derived from H(pool_commitment || beacon randomness). The auditor commits
     to the pool BEFORE the beacon value exists, so they cannot pick a
     favourable subset; the provider cannot predict the subset either.
+
+    v0.2 specifies the shuffle as HMAC-SHA256-CTR + Fisher-Yates with
+    rejection sampling (see portable.py). v0.1 used Python's random.shuffle,
+    which is reproducible only under CPython -- a real interop defect in a
+    protocol whose whole point is that anyone can recheck it.
+
+    Changing the derivation would silently invalidate every receipt already
+    issued, so verification stays VERSION-AWARE: a v0.1 receipt is still
+    checked against the v0.1 derivation. A protocol that cannot verify its own
+    history is not a protocol.
     """
-    mat = f"{pool_commitment}|{beacon.get('randomness')}".encode()
-    seed = int.from_bytes(hashlib.sha256(mat).digest()[:8], "big")
-    idx = list(range(n))
-    random.Random(seed).shuffle(idx)
-    return idx
+    if str(version).endswith("/0.1"):
+        import random as _r
+        mat = f"{pool_commitment}|{beacon.get('randomness')}".encode()
+        seed = int.from_bytes(hashlib.sha256(mat).digest()[:8], "big")
+        idx = list(range(n))
+        _r.Random(seed).shuffle(idx)
+        return idx
+    seed = portable.selection_seed(pool_commitment, beacon.get("randomness"))
+    return portable.shuffle_indices(seed, n)
 
 
 # ------------------------------------------------------------ statistics ----
@@ -183,8 +198,9 @@ def verify_receipt(receipt: dict) -> dict:
     checks["pool_commitment"] = (recomputed == receipt["pool"]["commitment"])
 
     # 2. Item selection really was beacon-derived, not auditor-chosen.
+    #    Derivation is version-scoped so older receipts remain verifiable.
     order = selection_order(receipt["pool"]["commitment"], receipt["beacon"],
-                            len(pool))
+                            len(pool), receipt.get("version", VERSION))
     used = [t["item_id"] for t in receipt["transcript"]]
     checks["beacon_selection"] = (order[:len(used)] == used)
 

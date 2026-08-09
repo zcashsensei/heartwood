@@ -333,6 +333,78 @@ check("KNOWN BOUNDARY: fabrication verifies (needs AEX/zkTLS)",
       "if this now FAILS, the boundary changed -- update THREAT_MODEL.md")
 
 
+# ------------------------------------------------------- portability v0.2 ----
+section("portable selection (v0.2): language-independent shuffle")
+
+import portable as PT
+
+sd = PT.selection_seed("ab" * 32, "cd" * 16)
+check("selection seed is 32 bytes", len(sd) == 32)
+check("seed deterministic", sd == PT.selection_seed("ab" * 32, "cd" * 16))
+check("seed changes with commitment", sd != PT.selection_seed("ff" * 32, "cd" * 16))
+check("seed changes with beacon", sd != PT.selection_seed("ab" * 32, "ee" * 16))
+
+o = PT.shuffle_indices(sd, 64)
+check("shuffle is a permutation", sorted(o) == list(range(64)))
+check("shuffle deterministic", o == PT.shuffle_indices(sd, 64))
+check("shuffle differs for a different seed",
+      o != PT.shuffle_indices(PT.selection_seed("ff" * 32, "cd" * 16), 64))
+check("shuffle handles n=1", PT.shuffle_indices(sd, 1) == [0])
+check("shuffle handles n=0", PT.shuffle_indices(sd, 0) == [])
+
+# Rejection sampling must be unbiased: every permutation of n=4 should appear
+# with roughly equal frequency. A plain-modulo implementation fails this.
+cnt = collections_Counter = {}
+for k in range(24000):
+    p = tuple(PT.shuffle_indices(PT.selection_seed("11" * 32, str(k)), 4))
+    cnt[p] = cnt.get(p, 0) + 1
+vals = sorted(cnt.values())
+expected = 24000 / 24
+check("all 24 permutations of n=4 appear", len(cnt) == 24, f"got {len(cnt)}")
+check("permutation frequencies within 4 sigma of uniform",
+      abs(vals[0] - expected) < 4 * (expected ** 0.5)
+      and abs(vals[-1] - expected) < 4 * (expected ** 0.5),
+      f"min={vals[0]} max={vals[-1]} expected~{expected:.0f}")
+
+# uniform_below must never return >= m and must terminate
+strm = PT.drbg_stream(sd)
+check("uniform_below in range", all(0 <= PT.uniform_below(strm, m) < m
+                                    for m in (1, 2, 3, 7, 100, 65535)))
+
+# published cross-language test vectors must be stable
+tv = PT.test_vectors()
+check("test vectors present", len(tv) == 3)
+check("test vectors stable", tv == PT.test_vectors())
+check("test vector orders are permutations",
+      all(sorted(t["order"]) == list(range(t["n"])) for t in tv))
+
+section("version-scoped verification: v0.1 receipts stay verifiable")
+
+v01 = copy.deepcopy(rec)
+v01["version"] = "heartwood/0.1"
+legacy_order = H.selection_order(c1, beacon, len(pool), "heartwood/0.1")
+check("v0.1 derivation differs from v0.2",
+      legacy_order != H.selection_order(c1, beacon, len(pool), "heartwood/0.2"))
+v01["transcript"] = [dict(t) for t in rec["transcript"]]
+for slot, item_id in zip(v01["transcript"], legacy_order):
+    slot["item_id"] = item_id
+    it = {i["id"]: i for i in pool}[item_id]
+    slot["question_sha256"] = H.sha(it["q"])
+    resp = f"ANSWER: {it['a']}" if slot["graded"] else "ANSWER: 0"
+    slot["response"], slot["response_sha256"] = resp, H.sha(resp)
+    slot["graded"] = E.grade(E.extract(resp), it["a"], resp)
+v01["result"] = H.build_receipt(20260808, 0, c1, beacon, plan, {"n": 36},
+                                v01["transcript"], "testhash")["result"]
+vv = H.verify_receipt(v01)
+check("v0.1 receipt verifies under v0.2 code", vv["valid"], str(vv["checks"]))
+
+# and a v0.1 receipt must NOT verify if relabelled as v0.2
+mismatched = copy.deepcopy(v01)
+mismatched["version"] = "heartwood/0.2"
+check("relabelling v0.1 as v0.2 is caught",
+      not H.verify_receipt(mismatched)["valid"])
+
+
 # ----------------------------------------------------------------- done ----
 print()
 if FAILS:

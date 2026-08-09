@@ -72,11 +72,27 @@ verifier can regenerate it without receiving it.
 
 ## 5. Beacon-derived selection
 
+The derivation is fully specified — no language-specific PRNG.
+
 ```
-seed_material = f"{C}|{beacon.randomness}".encode("utf-8")
-prng_seed     = int.from_bytes(SHA256(seed_material)[:8], "big")
-order         = shuffle(range(len(pool)), prng_seed)
+seed = SHA256( pool_commitment ‖ "|" ‖ beacon.randomness )      # 32 bytes
+
+# Random source: HMAC-SHA256 in counter mode.
+#   block(i) = HMAC-SHA256(key = seed, msg = uint64_be(i))      # i = 0,1,2,…
+#   words    = successive 8-byte big-endian slices of the block stream
+
+# Unbiased index in [0, m):  reject-and-redraw, never modulo alone.
+#   bound = 2^64 − (2^64 mod m)
+#   draw next 8-byte word v; if v >= bound redraw; else return v mod m
+
+# Fisher-Yates, descending:
+#   for i = n−1 down to 1:  j = uniform_below(i+1);  swap(idx[i], idx[j])
 ```
+
+HMAC-SHA256 is in every standard library, so an independent implementation
+needs no crypto dependency. Cross-language test vectors are published in
+`portable.py::test_vectors()` — an implementation that reproduces them is
+interoperable.
 
 Items MUST be consumed strictly in `order`. The verifier checks
 `order[:n] == [t.item_id for t in transcript]`, which simultaneously defeats:
@@ -85,10 +101,13 @@ Items MUST be consumed strictly in `order`. The verifier checks
 - **reordering** — any permutation changes the prefix;
 - **beacon substitution** — a different beacon yields a different order.
 
-The shuffle MUST be a documented, reproducible algorithm. This implementation
-uses Python's `random.Random(seed).shuffle`; an interoperable implementation
-MUST specify and match the PRNG, or the profile MUST define a portable one
-(recommended for v1: Fisher-Yates driven by ChaCha20 keyed with `prng_seed`).
+> **Changed in v0.2.** v0.1 used Python's `random.Random(seed).shuffle`, which
+> reproduces only under CPython — so a Rust or Go verifier could not recompute
+> the order, and the receipt was not actually portable. Because this changes a
+> derivation, verification is **version-scoped**: a verifier MUST check a
+> `heartwood/0.1` receipt against the v0.1 derivation and a `heartwood/0.2`
+> receipt against the one above. A protocol that cannot verify its own history
+> is not a protocol.
 
 ## 6. Evidence accumulation
 

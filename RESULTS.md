@@ -159,6 +159,54 @@ auditor's protocol, not the provider's speech. Closing this requires a
 transport-binding layer — AEX signatures or TLSNotary/zkTLS — and note that
 zkTLS today is designated-verifier, so a third party still trusts the notary.
 
+## v0.2 — portability and scale
+
+Two gaps flagged in v0.1 were addressed.
+
+### Portability (closed)
+
+v0.1 derived the challenge order with Python's `random.Random.shuffle`, which
+reproduces only under CPython — so a Rust or Go verifier could not recompute
+the order and the receipt was **not actually portable**. A real interop defect
+in a protocol whose entire value is that anyone can recheck it.
+
+v0.2 specifies the shuffle exactly: **HMAC-SHA256 in counter mode** as the
+random source, **Fisher-Yates** with **rejection sampling** for unbiased index
+selection. HMAC-SHA256 is in every standard library, so an independent
+implementation needs no crypto dependency — chosen over ChaCha20 for exactly
+that reason. Cross-language test vectors ship in `portable.py::test_vectors()`.
+
+Verified unbiased: over 60,000 shuffles of n=5, all 120 permutations appear
+with observed stdev **21.8** against a theoretical **22.3** for a uniform
+distribution. Plain modulo (the common shortcut) fails this test.
+
+Because this changes a derivation, **verification is version-scoped**: all
+three v0.1 receipts in `evidence/` still verify under v0.2 code. A protocol
+that cannot verify its own history is not a protocol.
+
+### Frontier scale (partially closed)
+
+`providers.py` adds an endpoint adapter so Heartwood runs against real APIs,
+not just a local model. The Anthropic adapter implements the attack directly
+rather than simulating it:
+
+| mode | configuration |
+|---|---|
+| honest | `thinking: {type: "enabled", budget_tokens: 4000}` |
+| hollow | thinking **omitted** (disabled) and `max_tokens` capped |
+
+Same model, same weights, same signed response — only the compute differs.
+This is precisely a provider silently serving `reasoning_effort: none` while
+billing for a reasoning tier. Claude Haiku 4.5 is the cheapest model
+supporting extended thinking ($1/$5 per MTok), making a full audit ≈ $0.50.
+
+**Status: not yet run.** The adapter authenticates correctly (the API key is
+read from the OS keystore at point of use, never echoed or written to disk),
+but the account returned `"credit balance is too low"`. Auth and transport are
+verified; the request body has **not** been proven accepted, because billing is
+checked before a schema error would surface. Stated as unfinished rather than
+implied complete.
+
 ## Test suite
 
 `python tests.py` → **60/60 passing**, covering ground truth re-derivation

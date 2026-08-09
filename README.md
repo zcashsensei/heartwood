@@ -133,7 +133,13 @@ verdict restatement. One boundary is documented and demonstrated rather than
 hidden: a fully self-consistent fabricated transcript is *not* caught, because
 Heartwood binds the auditor's protocol, not the provider's speech.
 
-**Tests.** `python tests.py` → **60/60 passing**.
+**Tests.** `python tests.py` → **78/78 passing**.
+
+**Portable by construction (v0.2).** Item selection is specified exactly —
+HMAC-SHA256 counter mode + Fisher-Yates with rejection sampling — so any
+language can recompute a receipt with no crypto dependency. Verified unbiased
+over 60,000 shuffles (observed stdev 21.8 vs theoretical 22.3). Verification is
+version-scoped, so receipts issued under v0.1 still verify.
 
 Full numbers, the operating envelope, and the bugs found during development are
 in [RESULTS.md](RESULTS.md).
