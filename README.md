@@ -114,6 +114,11 @@ computation per request reduced.**
 No false positive on the honest endpoint — its evidence *decayed*, as a
 supermartingale under the null must.
 
+**Replicated across independent audits** (own pool seed, own beacon order):
+**5/5 effort skims detected** at queries 23, 26, 28, 28, 34 (median 28), and
+**0/3 false positives** on honest endpoints. The Monte Carlo model predicted a
+median of 28 — theory and practice agree without tuning.
+
 **The decisive experiment.** A naive skim (short answers) is caught by a
 response-length classifier alone, so it proves nothing. Against a *padded*
 skimmer — one that commits to an answer before deliberating, then writes a

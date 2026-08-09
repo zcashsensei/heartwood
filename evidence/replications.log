@@ -3,3 +3,11 @@ hollow  seed=900001 fired_at=34 rate=0.147 log10W=+2.08 (155s)
 hollow  seed=900002 fired_at=28 rate=0.107 log10W=+2.02 (127s)
 hollow  seed=900003 fired_at=26 rate=0.077 log10W=+2.09 (119s)
 hollow  seed=900004 fired_at=28 rate=0.107 log10W=+2.02 (121s)
+honest  seed=800000 fired_at=None rate=0.711 log10W=-0.07 (425s)
+honest  seed=800001 fired_at=None rate=0.489 log10W=+0.10 (451s)
+honest  seed=800002 fired_at=None rate=0.711 log10W=-0.17 (425s)
+
+HOLLOW  detected 5/5
+  queries-to-detection: min=23 median=28 max=34
+HONEST  false positives 0/3   (alpha=0.01)
+  peak evidence: ['10^-0.07', '10^+0.10', '10^-0.17']

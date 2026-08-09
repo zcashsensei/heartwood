@@ -184,6 +184,26 @@ Because this changes a derivation, **verification is version-scoped**: all
 three v0.1 receipts in `evidence/` still verify under v0.2 code. A protocol
 that cannot verify its own history is not a protocol.
 
+### Independent replications (closed)
+
+A single audit firing at query 31 is an anecdote. Eight independent audits —
+each with its own pool seed, so a different committed pool and a different
+beacon-derived order — give a distribution:
+
+| arm | n | result |
+|---|---|---|
+| effort-skimmed | 5 | **5/5 detected** — fired at queries **23, 26, 28, 28, 34** (median **28**) |
+| honest | 3 | **0/3 false positives** — peak evidence 10^−0.07, 10^+0.10, 10^−0.17 |
+
+The Monte Carlo model predicted a median of **28** and p90 of **42** for full
+skim. Observed median: **28**, max 34. Theory and practice agree without
+tuning.
+
+One honest replication scored **0.489** — barely above the null boundary
+`p0 = 0.446`, an unlucky honest run. Its evidence crept to 10^+0.10 and came
+nowhere near the 10² threshold. That is the stress case for a false positive,
+and the supermartingale held.
+
 ### Frontier scale (partially closed)
 
 `providers.py` adds an endpoint adapter so Heartwood runs against real APIs,
