@@ -10,12 +10,16 @@
 [![spec: heartwood/0.3](https://img.shields.io/badge/spec-heartwood%2F0.3-9a4a1e.svg)](SPEC.md)
 [![site](https://img.shields.io/badge/site-zcashsensei.github.io%2Fheartwood-informational.svg)](https://zcashsensei.github.io/heartwood/)
 
-Every push runs the full suite on Python 3.10–3.13 with **no third-party
-dependencies and no network access** — the test suite, an independent
-re-derivation of all 5,400 ground truths, the cross-language test vectors, every
-published receipt, the adversary suite, and a check that each figure quoted in
-the preprint matches the receipt it came from. That is the claim of the project,
-enforced on every commit rather than asserted in prose.
+Everything here is checkable from a clean clone with a stock Python — **no
+third-party dependencies, no network access**: the test suite (95 tests), an
+independent re-derivation of all 5,400 ground truths, the cross-language test
+vectors, every published receipt across all three protocol versions, the
+adversary suite, and a check that each figure quoted in the preprint matches the
+receipt it came from.
+
+```bash
+python tests.py && python verify_truth.py && python paper/check_paper.py
+```
 
 > Hollow-LLM shows the trunk can be empty. Heartwood proves it is solid.
 
