@@ -6,7 +6,16 @@
 
 <br clear="left">
 
-🌐 **[heartwood site →](https://zcashsensei.github.io/heartwood/)**
+[![licence: MIT](https://img.shields.io/badge/licence-MIT-blue.svg)](LICENSE)
+[![spec: heartwood/0.3](https://img.shields.io/badge/spec-heartwood%2F0.3-9a4a1e.svg)](SPEC.md)
+[![site](https://img.shields.io/badge/site-zcashsensei.github.io%2Fheartwood-informational.svg)](https://zcashsensei.github.io/heartwood/)
+
+Every push runs the full suite on Python 3.10–3.13 with **no third-party
+dependencies and no network access** — the test suite, an independent
+re-derivation of all 5,400 ground truths, the cross-language test vectors, every
+published receipt, the adversary suite, and a check that each figure quoted in
+the preprint matches the receipt it came from. That is the claim of the project,
+enforced on every commit rather than asserted in prose.
 
 > Hollow-LLM shows the trunk can be empty. Heartwood proves it is solid.
 
