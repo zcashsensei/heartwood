@@ -16,7 +16,7 @@ import heartwood as H
 HERE = pathlib.Path(__file__).parent
 
 
-def attack(name, receipt, mutate, expect_caught_by=None):
+def attack(name, receipt, mutate):
     r = copy.deepcopy(receipt)
     mutate(r)
     v = H.verify_receipt(r)
