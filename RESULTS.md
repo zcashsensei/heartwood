@@ -171,6 +171,43 @@ auditor's protocol, not the provider's speech. Closing this requires a
 transport-binding layer — AEX signatures or TLSNotary/zkTLS — and note that
 zkTLS today is designated-verifier, so a third party still trusts the notary.
 
+## v0.3 — portability, actually
+
+**v0.2 claimed portable receipts and delivered half of it.** The shuffle was
+specified language-independently; **pool generation was still CPython's
+Mersenne Twister**. Since a verifier must regenerate the pool both to check the
+commitment and to re-grade responses, a Rust or Go verifier still could not
+verify a Heartwood receipt. One derivation fixed, both claimed.
+
+Found by auditing the claim rather than trusting it: `grep` for `random` in
+`challenges.py` after a clean-clone test.
+
+v0.3 derives every pool item from the same HMAC-SHA256 DRBG
+(`randint`/`randrange`/`choice`/`sample`, each specified in `SPEC.md` §4), and
+publishes test vectors for **both** derivations. Verification is version-scoped
+on both axes:
+
+| receipt version | pool generation | shuffle |
+|---|---|---|
+| `heartwood/0.1` | CPython MT | CPython MT |
+| `heartwood/0.2` | CPython MT | portable |
+| `heartwood/0.3` | portable | portable |
+
+All ten previously published receipts still verify. Ground truth re-verified
+under the new generator: 5,400 items, 0 bad. Tests **78 → 95**.
+
+Fresh v0.3 audit on Claude Haiku 4.5 (calibration 20/20 → p0 = 0.787):
+
+| endpoint | verdict | queries | rate |
+|---|---|---|---|
+| honest | NO_EVIDENCE_OF_DEFICIT | 25 | 1.000 |
+| **effort-skimmed** | **EFFORT_DEFICIT** | **6** | 0.167 |
+
+One test failed during this change and was correct to fail: the v0.1
+compatibility fixture had been building a *portable* pool and merely relabelling
+it `v0.1`. It only became detectable once pool generation was version-scoped —
+the fixture was never a real v0.1 receipt, so it had been proving nothing.
+
 ## v0.2 — portability and scale
 
 Two gaps flagged in v0.1 were addressed.

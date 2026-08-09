@@ -68,7 +68,37 @@ Binding the answers is what prevents an auditor from later re-interpreting what
 "correct" meant. Binding the questions prevents pool substitution.
 
 The pool MUST be reproducible from `(seed, size, difficulty, families)` so a
-verifier can regenerate it without receiving it.
+verifier can regenerate it without receiving it — and that reproduction MUST be
+language-independent.
+
+**Changed in v0.3.** v0.1 and v0.2 generated pool items with CPython's
+`random.Random` (Mersenne Twister). Because a verifier must regenerate the pool
+to check the commitment *and* to re-grade, those receipts were verifiable only
+under CPython — v0.2 fixed the shuffle and claimed portability while this half
+was still open. v0.3 derives every item from the same HMAC-SHA256 DRBG:
+
+```
+item_seed(pool_seed, difficulty, idx)
+    = SHA256( "heartwood-item|" ‖ pool_seed ‖ "|" ‖ difficulty ‖ "|" ‖ idx )
+
+# Drawn from the DRBG keyed with item_seed, in generator call order:
+randint(a, b)   = a + uniform_below(b − a + 1)        # inclusive both ends
+randrange(n)    = uniform_below(n)                    # half-open
+choice(seq)     = seq[ uniform_below(len(seq)) ]
+sample(seq, k)  = partial Fisher-Yates: for i in 0..k−1,
+                  swap slot i with slot i + uniform_below(len − i); take [:k]
+```
+
+Test vectors for both derivations — selection order *and* per-item stream — are
+published in `portable.py::test_vectors()` and `evidence/v0.3/test_vectors.json`.
+
+Verification is version-scoped across both derivations:
+
+| receipt version | pool generation | shuffle |
+|---|---|---|
+| `heartwood/0.1` | CPython MT | CPython MT |
+| `heartwood/0.2` | CPython MT | portable |
+| `heartwood/0.3` | portable | portable |
 
 ## 5. Beacon-derived selection
 

@@ -17,6 +17,8 @@ model, not chosen for absolute hardness.
 import hashlib
 import random
 
+import portable
+
 DIFF = {
     0: {"ops": (2, 2), "mulmax": 2, "start": (5, 15), "addmax": 6,
         "words": (3, 4), "qty": (2, 3), "price": (2, 5), "off": (2, 6),
@@ -49,7 +51,18 @@ DAYS = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday",
         "Saturday", "Sunday"]
 
 
-def _rng(seed: int, idx: int) -> random.Random:
+def _rng(seed: int, idx: int, difficulty: int = 0, portable_mode: bool = True):
+    """Per-item random source.
+
+    portable_mode=True  -> HMAC-SHA256 DRBG (see portable.py). Any language can
+                           regenerate the identical pool, which is what makes a
+                           receipt verifiable off-Python.
+    portable_mode=False -> CPython's Mersenne Twister, retained ONLY so that
+                           receipts issued under heartwood/0.1 and /0.2 remain
+                           verifiable. Do not use it for new pools.
+    """
+    if portable_mode:
+        return portable.PortableRandom(portable.item_seed(seed, difficulty, idx))
     h = hashlib.sha256(f"{seed}:{idx}".encode()).digest()
     return random.Random(int.from_bytes(h[:8], "big"))
 
@@ -129,7 +142,8 @@ def set_logic(r, d):
 GENERATORS = [state_track, word_index, money_chain, date_offset, set_logic]
 
 
-def make_pool(seed: int, n: int, difficulty: int = 2, families=None):
+def make_pool(seed: int, n: int, difficulty: int = 2, families=None,
+              portable_mode: bool = True):
     """Deterministic pool of (id, question, answer, family).
 
     `families` restricts the pool to the CAPABILITY BAND of the claimed model.
@@ -147,7 +161,7 @@ def make_pool(seed: int, n: int, difficulty: int = 2, families=None):
         raise ValueError(f"no generators match families={families}")
     pool = []
     for i in range(n):
-        r = _rng(seed * 10 + difficulty, i)
+        r = _rng(seed * 10 + difficulty, i, difficulty, portable_mode)
         g = gens[i % len(gens)]
         q, a = g(r, d)
         pool.append({"id": i, "q": q, "a": a,

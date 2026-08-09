@@ -1,0 +1,185 @@
+{
+ "selection": [
+  {
+   "pool_commitment": "0000000000000000000000000000000000000000000000000000000000000000",
+   "beacon_randomness": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+   "n": 8,
+   "seed_sha256": "bcde751aa63a4b6a8fabf29be5449709b51ad795aa1d2de2dc976f048f5f13c3",
+   "order": [
+    2,
+    4,
+    1,
+    7,
+    3,
+    6,
+    0,
+    5
+   ]
+  },
+  {
+   "pool_commitment": "1111111111111111111111111111111111111111111111111111111111111111",
+   "beacon_randomness": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+   "n": 16,
+   "seed_sha256": "71c24b050257a4edd025462574b78c658c63ac49c58f58be106c662595df9a1c",
+   "order": [
+    0,
+    8,
+    7,
+    12,
+    9,
+    14,
+    11,
+    10,
+    5,
+    1,
+    4,
+    3,
+    15,
+    2,
+    6,
+    13
+   ]
+  },
+  {
+   "pool_commitment": "deadbeefdeadbeefdeadbeefdeadbeefdeadbeefdeadbeefdeadbeefdeadbeef",
+   "beacon_randomness": null,
+   "n": 32,
+   "seed_sha256": "6847a9510cfcde0bd07aa404ca2eeef509adf4a4f7e474e21db6de00e54ad81e",
+   "order": [
+    31,
+    27,
+    6,
+    22,
+    0,
+    9,
+    19,
+    11,
+    8,
+    25,
+    18,
+    28,
+    5,
+    24,
+    12,
+    10,
+    2,
+    3,
+    29,
+    15,
+    26,
+    17,
+    16,
+    30,
+    21,
+    7,
+    13,
+    23,
+    1,
+    4,
+    14,
+    20
+   ]
+  }
+ ],
+ "item_stream": [
+  {
+   "pool_seed": 20260808,
+   "difficulty": 0,
+   "idx": 0,
+   "item_seed_sha256": "2e23d405328a4d299523d439d56d77c991d71b5e49db92d0867f76ddaa2da3d5",
+   "randint_1_100": [
+    40,
+    55,
+    58,
+    2,
+    99
+   ],
+   "randrange_7": [
+    4,
+    6,
+    4,
+    3,
+    4
+   ],
+   "choice_abcde": [
+    "d",
+    "b",
+    "d",
+    "e",
+    "b"
+   ],
+   "sample_0to9_k4": [
+    5,
+    8,
+    1,
+    3
+   ]
+  },
+  {
+   "pool_seed": 20260808,
+   "difficulty": 3,
+   "idx": 7,
+   "item_seed_sha256": "33509654e6cbb70e59771307468538e7f4946abf4ff29f2a17224ea37f773d98",
+   "randint_1_100": [
+    89,
+    54,
+    84,
+    17,
+    11
+   ],
+   "randrange_7": [
+    1,
+    6,
+    0,
+    1,
+    2
+   ],
+   "choice_abcde": [
+    "c",
+    "c",
+    "e",
+    "d",
+    "c"
+   ],
+   "sample_0to9_k4": [
+    5,
+    9,
+    3,
+    1
+   ]
+  },
+  {
+   "pool_seed": 1,
+   "difficulty": 5,
+   "idx": 42,
+   "item_seed_sha256": "66ea8e1a7fe816fd3169063ea95304af216b349a0479505a2cac930b1ca7655b",
+   "randint_1_100": [
+    73,
+    9,
+    19,
+    1,
+    42
+   ],
+   "randrange_7": [
+    2,
+    0,
+    2,
+    4,
+    2
+   ],
+   "choice_abcde": [
+    "e",
+    "e",
+    "c",
+    "c",
+    "e"
+   ],
+   "sample_0to9_k4": [
+    6,
+    1,
+    8,
+    0
+   ]
+  }
+ ]
+}

@@ -178,13 +178,19 @@ verdict restatement. One boundary is documented and demonstrated rather than
 hidden: a fully self-consistent fabricated transcript is *not* caught, because
 Heartwood binds the auditor's protocol, not the provider's speech.
 
-**Tests.** `python tests.py` → **78/78 passing**.
+**Tests.** `python tests.py` → **95/95 passing**.
 
 **Portable by construction (v0.2).** Item selection is specified exactly —
 HMAC-SHA256 counter mode + Fisher-Yates with rejection sampling — so any
 language can recompute a receipt with no crypto dependency. Verified unbiased
-over 60,000 shuffles (observed stdev 21.8 vs theoretical 22.3). Verification is
-version-scoped, so receipts issued under v0.1 still verify.
+over 60,000 shuffles (observed stdev 21.8 vs theoretical 22.3).
+
+**v0.3 closes the other half:** v0.2 specified the shuffle but still generated
+the challenge pool with CPython's Mersenne Twister — and a verifier must
+regenerate the pool to check the commitment and re-grade, so receipts were
+still Python-only. Pool generation is now DRBG-derived too, with test vectors
+for both derivations. Verification is version-scoped on both axes, so every
+previously published receipt still verifies.
 
 Full numbers, the operating envelope, and the bugs found during development are
 in [RESULTS.md](RESULTS.md).

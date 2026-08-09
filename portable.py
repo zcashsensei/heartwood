@@ -67,22 +67,94 @@ def selection_seed(pool_commitment: str, beacon_randomness) -> bytes:
     return hashlib.sha256(material).digest()
 
 
+class PortableRandom:
+    """A specified, language-independent stand-in for `random.Random`.
+
+    v0.2 made the SHUFFLE portable but left POOL GENERATION on CPython's
+    Mersenne Twister -- and a verifier must regenerate the pool to check the
+    commitment and to re-grade. So receipts were still Python-only: one of the
+    two derivations was fixed and both were claimed. This closes the other.
+
+    Exposes only the surface the generators use (randint / choice / sample),
+    each defined in terms of the HMAC-SHA256 DRBG above so any language can
+    reproduce it.
+    """
+
+    def __init__(self, seed: bytes):
+        self._stream = drbg_stream(seed)
+
+    def randint(self, a: int, b: int) -> int:
+        """Inclusive on both ends, matching random.randint's contract."""
+        if b < a:
+            raise ValueError(f"empty range [{a}, {b}]")
+        return a + uniform_below(self._stream, b - a + 1)
+
+    def randrange(self, n: int) -> int:
+        """Half-open [0, n), matching random.randrange(n)."""
+        return uniform_below(self._stream, n)
+
+    def choice(self, seq):
+        if not seq:
+            raise IndexError("choice from empty sequence")
+        return seq[uniform_below(self._stream, len(seq))]
+
+    def sample(self, seq, k: int):
+        """k distinct items, in draw order.
+
+        Partial Fisher-Yates over a copy: swap each of the first k slots with
+        a uniformly chosen slot at or after it, then take the prefix. Simple
+        enough to restate in one sentence in the spec.
+        """
+        pool = list(seq)
+        if not 0 <= k <= len(pool):
+            raise ValueError(f"sample size {k} out of range for {len(pool)}")
+        for i in range(k):
+            j = i + uniform_below(self._stream, len(pool) - i)
+            pool[i], pool[j] = pool[j], pool[i]
+        return pool[:k]
+
+
+def item_seed(pool_seed: int, difficulty: int, idx: int) -> bytes:
+    """Per-item DRBG seed. Independent across items and reproducible."""
+    return hashlib.sha256(
+        f"heartwood-item|{pool_seed}|{difficulty}|{idx}".encode("utf-8")
+    ).digest()
+
+
 def test_vectors():
     """Cross-language test vectors. An independent implementation that
-    reproduces these is interoperable with this one."""
-    out = []
+    reproduces these is interoperable with this one.
+
+    Covers BOTH derivations a verifier needs: the beacon-bound selection order,
+    and the per-item random stream that regenerates the challenge pool. v0.2
+    published only the first, which is why v0.2 receipts were still
+    Python-only in practice.
+    """
+    out = {"selection": [], "item_stream": []}
     for commitment, randomness, n in (
         ("00" * 32, "aa" * 16, 8),
         ("11" * 32, "bb" * 16, 16),
         ("deadbeef" * 8, None, 32),
     ):
         seed = selection_seed(commitment, randomness)
-        out.append({
+        out["selection"].append({
             "pool_commitment": commitment,
             "beacon_randomness": randomness,
             "n": n,
             "seed_sha256": seed.hex(),
             "order": shuffle_indices(seed, n),
+        })
+    for pool_seed, difficulty, idx in ((20260808, 0, 0), (20260808, 3, 7),
+                                       (1, 5, 42)):
+        sd = item_seed(pool_seed, difficulty, idx)
+        r = PortableRandom(sd)
+        out["item_stream"].append({
+            "pool_seed": pool_seed, "difficulty": difficulty, "idx": idx,
+            "item_seed_sha256": sd.hex(),
+            "randint_1_100": [r.randint(1, 100) for _ in range(5)],
+            "randrange_7": [r.randrange(7) for _ in range(5)],
+            "choice_abcde": [r.choice(list("abcde")) for _ in range(5)],
+            "sample_0to9_k4": r.sample(list(range(10)), 4),
         })
     return out
 

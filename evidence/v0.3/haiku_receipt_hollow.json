@@ -1,0 +1,95 @@
+{
+ "version": "heartwood/0.3",
+ "pool": {
+  "seed": 20260808,
+  "difficulty": 3,
+  "commitment": "1da3e5fad5344beb182732465915d282e6212b0fe5c5f3eaa8aaca045bddbd92",
+  "size": 300,
+  "families": [
+   "state_track"
+  ]
+ },
+ "beacon": {
+  "chain": "drand-mainnet-default",
+  "round": 6360458,
+  "randomness": "268603073c2cff6e792974c1bfc0049c8b62887eee5825e9e376666f5cc7fa55",
+  "source": "drand"
+ },
+ "plan": {
+  "p0": 0.7870399178764141,
+  "p1": 0.3,
+  "alpha": 0.01,
+  "lambda": 2.9058259110309743,
+  "pool_size": 300,
+  "max_queries": 25,
+  "families": [
+   "state_track"
+  ]
+ },
+ "calibration": {
+  "n": 20,
+  "successes": 20,
+  "raw_rate": 1.0,
+  "method": "wilson_lower_99"
+ },
+ "code_hash": "b51343958e16a54adc5f85a20b9693b0e2770547b3ccafb6e76055d93c68e6c6",
+ "transcript": [
+  {
+   "item_id": 47,
+   "served_mode": "hollow",
+   "question_sha256": "6f63c1cdc9afa307becbff9fe214cafb69a2e6cfdef20559ce974cc5e3947425",
+   "response": "86",
+   "response_sha256": "434c9b5ae514646bbd91b50032ca579efec8f22bf0b4aac12e65997c418e0dd6",
+   "graded": 1
+  },
+  {
+   "item_id": 108,
+   "served_mode": "hollow",
+   "question_sha256": "203b91024182e60d0f7972d051c2e20b925d7b6df04d9a91671976badb3120f3",
+   "response": "423",
+   "response_sha256": "814bb6b8dc12188a44b71e378dc20a4292e01979aa9ab95b09b8a681391dfc9d",
+   "graded": 0
+  },
+  {
+   "item_id": 207,
+   "served_mode": "hollow",
+   "question_sha256": "caadbaaaba5dd866839e6650ece71ef5699ceb1a47b8ecfa45d6c8c09866354b",
+   "response": "240",
+   "response_sha256": "6af1f692e9496c6d0b668316eccb93276ae6b6774fa728aac31ff40a38318760",
+   "graded": 0
+  },
+  {
+   "item_id": 61,
+   "served_mode": "hollow",
+   "question_sha256": "8acad9c257d735edba8b354d0cece1cb0ecd1a5a1b7d2a11238c4696fbf1f972",
+   "response": "299",
+   "response_sha256": "308831041ea4863c3f87d222c31f759411898c874a9006b4bd6c745858b8f3bd",
+   "graded": 0
+  },
+  {
+   "item_id": 75,
+   "served_mode": "hollow",
+   "question_sha256": "6c02daa28461369553ead8e4b16ff9c4d1bfdb3050a2a6344c56c5224cb0f90a",
+   "response": "108",
+   "response_sha256": "9537f32ec7599e1ae953af6c9f929fe747ff9dadf79a9beff1f304c550173011",
+   "graded": 0
+  },
+  {
+   "item_id": 278,
+   "served_mode": "hollow",
+   "question_sha256": "cab2ff7ef0b26916629f9e04c62c0cf4d7bdddb9b44128401be45dbffa9c6f43",
+   "response": "75",
+   "response_sha256": "f369cb89fc627e668987007d121ed1eacdc01db9e28f8bb26f358b7d8c4f08ac",
+   "graded": 0
+  }
+ ],
+ "result": {
+  "n_queries": 6,
+  "successes": 1,
+  "observed_rate": 0.16666666666666666,
+  "peak_log10_wealth": 2.165123666856175,
+  "log10_threshold": 2.0,
+  "rejected_at": 6,
+  "verdict": "EFFORT_DEFICIT"
+ }
+}

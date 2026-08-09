@@ -58,7 +58,15 @@ import urllib.request
 import challenges as C
 import portable
 
-VERSION = "heartwood/0.2"
+VERSION = "heartwood/0.3"
+
+# Which derivations a given receipt version used. v0.2 fixed the SHUFFLE but
+# left POOL GENERATION on CPython's Mersenne Twister, so v0.2 receipts were
+# still Python-only in practice -- the verifier must regenerate the pool to
+# check the commitment and to re-grade. v0.3 closes that. Older receipts stay
+# verifiable against the derivations they were actually issued under.
+LEGACY_SHUFFLE = ("heartwood/0.1",)
+LEGACY_POOL = ("heartwood/0.1", "heartwood/0.2")
 DRAND_URL = "https://api.drand.sh/public/{round}"
 DRAND_CHAIN = "drand-mainnet-default"
 
@@ -96,7 +104,7 @@ def selection_order(pool_commitment: str, beacon: dict, n: int,
     checked against the v0.1 derivation. A protocol that cannot verify its own
     history is not a protocol.
     """
-    if str(version).endswith("/0.1"):
+    if str(version) in LEGACY_SHUFFLE:
         import random as _r
         mat = f"{pool_commitment}|{beacon.get('randomness')}".encode()
         seed = int.from_bytes(hashlib.sha256(mat).digest()[:8], "big")
@@ -191,16 +199,18 @@ def verify_receipt(receipt: dict) -> dict:
     checks, ok = {}, True
 
     # 1. The pool really is the committed pool (questions AND answers).
+    ver = receipt.get("version", VERSION)
     pool = C.make_pool(receipt["pool"]["seed"], receipt["pool"]["size"],
                        receipt["pool"]["difficulty"],
-                       receipt["pool"].get("families"))
+                       receipt["pool"].get("families"),
+                       portable_mode=(ver not in LEGACY_POOL))
     recomputed = C.pool_commitment(pool)
     checks["pool_commitment"] = (recomputed == receipt["pool"]["commitment"])
 
     # 2. Item selection really was beacon-derived, not auditor-chosen.
     #    Derivation is version-scoped so older receipts remain verifiable.
     order = selection_order(receipt["pool"]["commitment"], receipt["beacon"],
-                            len(pool), receipt.get("version", VERSION))
+                            len(pool), ver)
     used = [t["item_id"] for t in receipt["transcript"]]
     checks["beacon_selection"] = (order[:len(used)] == used)
 

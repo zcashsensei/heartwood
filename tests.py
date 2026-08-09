@@ -373,36 +373,122 @@ check("uniform_below in range", all(0 <= PT.uniform_below(strm, m) < m
 
 # published cross-language test vectors must be stable
 tv = PT.test_vectors()
-check("test vectors present", len(tv) == 3)
+check("selection vectors present", len(tv["selection"]) == 3)
+check("item-stream vectors present", len(tv["item_stream"]) == 3)
 check("test vectors stable", tv == PT.test_vectors())
 check("test vector orders are permutations",
-      all(sorted(t["order"]) == list(range(t["n"])) for t in tv))
+      all(sorted(t["order"]) == list(range(t["n"])) for t in tv["selection"]))
+
+section("portable POOL generation (v0.3): the other half of portability")
+
+# v0.2 made the shuffle portable but left pool generation on CPython's
+# Mersenne Twister -- so a verifier could not regenerate the pool, and
+# receipts were still Python-only. These lock that closed.
+pr = PT.PortableRandom(PT.item_seed(1, 0, 0))
+check("randint respects inclusive bounds",
+      all(3 <= pr.randint(3, 9) <= 9 for _ in range(500)))
+check("randint(a,a) is a", PT.PortableRandom(PT.item_seed(1, 0, 1)).randint(5, 5) == 5)
+check("randrange in [0,n)",
+      all(0 <= pr.randrange(7) < 7 for _ in range(500)))
+check("choice returns a member",
+      all(pr.choice(["x", "y", "z"]) in ("x", "y", "z") for _ in range(300)))
+s4 = PT.PortableRandom(PT.item_seed(2, 0, 0)).sample(list(range(10)), 4)
+check("sample returns k distinct in-range items",
+      len(s4) == 4 and len(set(s4)) == 4 and all(0 <= v < 10 for v in s4), str(s4))
+check("sample k=0 is empty", PT.PortableRandom(PT.item_seed(2, 0, 1)).sample([1, 2], 0) == [])
+try:
+    PT.PortableRandom(PT.item_seed(2, 0, 2)).sample([1, 2], 5)
+    check("sample rejects k > len", False, "no exception")
+except ValueError:
+    check("sample rejects k > len", True)
+
+check("item_seed is 32 bytes", len(PT.item_seed(1, 2, 3)) == 32)
+check("item_seed varies with every component",
+      len({PT.item_seed(1, 2, 3), PT.item_seed(2, 2, 3),
+           PT.item_seed(1, 9, 3), PT.item_seed(1, 2, 9)}) == 4)
+
+# pools must be deterministic, portable-by-default, and distinct from legacy
+pa = C.make_pool(20260808, 25, 0, ["state_track"])
+check("portable pool deterministic",
+      C.pool_commitment(pa) == C.pool_commitment(
+          C.make_pool(20260808, 25, 0, ["state_track"])))
+check("portable is the default",
+      C.pool_commitment(pa) == C.pool_commitment(
+          C.make_pool(20260808, 25, 0, ["state_track"], portable_mode=True)))
+check("portable pool differs from legacy pool",
+      C.pool_commitment(pa) != C.pool_commitment(
+          C.make_pool(20260808, 25, 0, ["state_track"], portable_mode=False)))
+
+# every family must generate on every tier under the portable RNG
+gen_ok = True
+for fam in ("state_track", "word_index", "money_chain", "date_offset", "set_logic"):
+    for dd in range(6):
+        try:
+            if len(C.make_pool(4242, 12, dd, [fam])) != 12:
+                gen_ok = False
+        except Exception:
+            gen_ok = False
+check("all 5 families generate on all 6 tiers (portable)", gen_ok)
+
+# ground truth must remain exact under the portable RNG
+bad = n = 0
+for dd in range(6):
+    for it in C.make_pool(31337, 120, dd, ["state_track"]):
+        m = re.match(r"Start with the number (\d+), then (.+)\. What", it["q"])
+        cur = int(m.group(1))
+        for op in m.group(2).split(", then "):
+            if op.startswith("add"):
+                cur += int(op.split()[1])
+            elif op.startswith("subtract"):
+                cur -= int(op.split()[1])
+            else:
+                cur *= int(op.split()[-1])
+        n += 1
+        bad += str(cur) != it["a"]
+check("portable pools carry exact ground truth", bad == 0, f"{bad}/{n} wrong")
 
 section("version-scoped verification: v0.1 receipts stay verifiable")
 
-v01 = copy.deepcopy(rec)
-v01["version"] = "heartwood/0.1"
-legacy_order = H.selection_order(c1, beacon, len(pool), "heartwood/0.1")
-check("v0.1 derivation differs from v0.2",
-      legacy_order != H.selection_order(c1, beacon, len(pool), "heartwood/0.2"))
-v01["transcript"] = [dict(t) for t in rec["transcript"]]
-for slot, item_id in zip(v01["transcript"], legacy_order):
-    slot["item_id"] = item_id
-    it = {i["id"]: i for i in pool}[item_id]
-    slot["question_sha256"] = H.sha(it["q"])
-    resp = f"ANSWER: {it['a']}" if slot["graded"] else "ANSWER: 0"
-    slot["response"], slot["response_sha256"] = resp, H.sha(resp)
-    slot["graded"] = E.grade(E.extract(resp), it["a"], resp)
-v01["result"] = H.build_receipt(20260808, 0, c1, beacon, plan, {"n": 36},
-                                v01["transcript"], "testhash")["result"]
-vv = H.verify_receipt(v01)
-check("v0.1 receipt verifies under v0.2 code", vv["valid"], str(vv["checks"]))
+# A genuine v0.1 receipt used BOTH legacy derivations -- the CPython pool
+# generator AND the CPython shuffle. Build the fixture that way, or it is not
+# actually a v0.1 receipt and the test proves nothing. (An earlier version of
+# this test built a portable pool and merely relabelled it v0.1; it failed,
+# correctly, once pool generation became version-scoped.)
+legacy_pool = C.make_pool(20260808, 120, 0, ["state_track", "money_chain"],
+                          portable_mode=False)
+legacy_c = C.pool_commitment(legacy_pool)
+check("legacy pool differs from portable pool", legacy_c != c1)
 
-# and a v0.1 receipt must NOT verify if relabelled as v0.2
-mismatched = copy.deepcopy(v01)
-mismatched["version"] = "heartwood/0.2"
-check("relabelling v0.1 as v0.2 is caught",
-      not H.verify_receipt(mismatched)["valid"])
+legacy_order = H.selection_order(legacy_c, beacon, len(legacy_pool),
+                                 "heartwood/0.1")
+check("v0.1 shuffle differs from v0.3 shuffle",
+      legacy_order != H.selection_order(legacy_c, beacon, len(legacy_pool),
+                                        "heartwood/0.3"))
+
+legacy_t = []
+for item_id in legacy_order[:30]:
+    it = legacy_pool[item_id]
+    resp = f"ANSWER: {it['a']}" if rng.random() < 0.10 else "ANSWER: 0"
+    legacy_t.append({
+        "item_id": item_id, "served_mode": "hollow",
+        "question_sha256": H.sha(it["q"]), "response": resp,
+        "response_sha256": H.sha(resp),
+        "graded": E.grade(E.extract(resp), it["a"], resp)})
+
+legacy_plan = dict(plan)
+legacy_plan["pool_size"] = 120
+v01 = H.build_receipt(20260808, 0, legacy_c, beacon, legacy_plan, {"n": 36},
+                      legacy_t, "testhash")
+v01["version"] = "heartwood/0.1"
+vv = H.verify_receipt(v01)
+check("v0.1 receipt verifies under v0.3 code", vv["valid"], str(vv["checks"]))
+
+# and a v0.1 receipt must NOT verify if relabelled as a later version
+for relabel in ("heartwood/0.2", "heartwood/0.3"):
+    m = copy.deepcopy(v01)
+    m["version"] = relabel
+    check(f"relabelling v0.1 as {relabel} is caught",
+          not H.verify_receipt(m)["valid"])
 
 
 # ----------------------------------------------------------------- done ----
