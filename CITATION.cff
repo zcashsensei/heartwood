@@ -1,0 +1,40 @@
+cff-version: 1.2.0
+title: >-
+  Heartwood: Publicly Verifiable Proof of Semantic Effort for
+  Black-Box LLM Endpoints
+message: If you use this work, please cite it.
+type: software
+authors:
+  - alias: zcashsensei
+repository-code: https://github.com/zcashsensei/heartwood
+license: MIT
+date-released: 2026-08-08
+keywords:
+  - verifiable inference
+  - model substitution
+  - effort gap
+  - anytime-valid inference
+  - e-values
+  - randomness beacon
+  - LLM auditing
+  - confidential computing
+abstract: >-
+  Hollow-LLM (arXiv:2607.28884) established that a cryptographic proof of
+  correct inference does not bind the amount of computation actually
+  expended -- the "effort gap". Behavioural audits can measure effort, but
+  IRIS (arXiv:2607.20860) states that such audits are auditor-centric, with
+  no mechanism for independent verification and no use of cryptographic
+  commitment or public randomness. Heartwood closes that gap. A challenge
+  pool is committed before a public randomness beacon selects which items
+  are used, and evidence accumulates as an anytime-valid betting
+  supermartingale, so the resulting receipt is recomputable offline by any
+  third party. The protocol requires zero cooperation from the provider.
+  It targets silent reasoning-effort downgrade -- genuine weights, genuine
+  binary, reduced computation per request -- an attack that passes TEE
+  attestation, zkML weight commitments, and signed API provenance alike.
+  Measured on an endpoint where only serving effort differs, the audit
+  detects a full effort skim in 31 queries and a 70 percent dilution in 71
+  queries at alpha = 0.01, with no false positive on the honest endpoint.
+  Against a padded skimmer that pads responses to normal length, a
+  length-based style detector performs at chance (AUC 0.523) while the
+  capability gap remains large (0.750 versus 0.208).

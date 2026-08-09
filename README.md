@@ -6,6 +6,14 @@
 
 ---
 
+| | |
+|---|---|
+| **What to read first** | this page, then [SPEC.md](SPEC.md) |
+| **Why another layer** | [THREAT_MODEL.md](THREAT_MODEL.md) |
+| **The numbers** | [RESULTS.md](RESULTS.md) |
+| **The 62 sources** | [SOURCES.md](SOURCES.md) |
+| **Verify a receipt** | `python verify.py evidence/receipt_hollow.json` |
+
 ## The one-paragraph version
 
 Every existing way to verify a hosted LLM binds the wrong object. TEE
@@ -39,6 +47,22 @@ through gateways, and GPT-5.1 defaults `reasoning_effort` to `none`.
 
 See [THREAT_MODEL.md](THREAT_MODEL.md) for the full analysis and the honest
 list of what Heartwood does *not* prove.
+
+## The ordering *is* the security property
+
+```mermaid
+flowchart LR
+    A["1 · CALIBRATE<br/>disjoint pool<br/>find capability band<br/>p0 = lower bound"]
+    B["2 · COMMIT<br/>H(questions ‖ answers)<br/>published"]
+    C["3 · BEACON<br/>drand round<br/><i>did not exist at step 2</i>"]
+    D["4 · AUDIT<br/>beacon-derived order<br/>anytime-valid betting"]
+    E["5 · RECEIPT<br/>recomputable<br/>by anyone, offline"]
+    A --> B --> C --> D --> E
+```
+
+Commit **before** the beacon exists, and neither side controls the sample: the
+auditor cannot pick a favourable subset, and the provider cannot predict which
+requests are audits. Reorder these steps and it is no longer Heartwood.
 
 ## How it works
 
