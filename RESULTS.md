@@ -277,6 +277,51 @@ model, and real serving knobs — but the skim was configured by us, not caught
 in the wild. It demonstrates that the audit detects the attack, not that any
 provider is performing it.
 
+### Claude Opus 5 — and why the cliff is model-relative
+
+Repeated on **Claude Opus 5**, the strongest model tested. Its thinking config
+differs (`budget_tokens` is removed and returns a 400; thinking is on by
+default; `disabled` is only accepted at effort ≤ high), so the adapter selects
+per model.
+
+The headline finding is methodological:
+
+| tier | Haiku 4.5 | Opus 5 |
+|---|---|---|
+| 3 | honest 1.00 / skimmed **0.00** — cliff | honest 1.00 / skimmed **1.00** — *no evidence* |
+| 5 | — | honest 1.00 / skimmed **0.00** — cliff |
+
+**Opus 5 solves an 8-step chain in 3 output tokens with no deliberation.** Audit
+it with Haiku's tier and every query is uninformative. The capability band is
+not a property of the protocol; it is a property of the *claimed model*, and
+calibration is what finds it. This is the single most important operational
+lesson in the whole project.
+
+**Live audit** (difficulty 5, α=0.01; calibration 20/20 → p0 = 0.787):
+
+| endpoint | declared p1 | verdict | queries | rate | evidence |
+|---|---|---|---|---|---|
+| honest | 0.30 | NO_EVIDENCE_OF_DEFICIT | 45 | 0.978 | 10^−0.42 |
+| **full skim** | 0.30 | **EFFORT_DEFICIT** | **4** | 0.000 | 10^+2.07 |
+| 50% dilution | 0.30 | not caught | 45 | 0.600 | 10^+0.49 |
+| **50% dilution** | **0.65** | **EFFORT_DEFICIT** | **33** | 0.515 | 10^+2.04 |
+
+The dilution rows are the interesting pair, and we publish both. The realized
+mix landed at 0.600 correct — **milder than the declared tolerance of 0.30** —
+so the bet drifted negative and never fired. Re-declaring the tolerance at
+`p1 = 0.65` (a separate audit with its own pre-declared plan, not a
+continuation) caught the same endpoint in 33 queries.
+
+That is the power/tolerance tradeoff demonstrated rather than asserted:
+**the test is only as sensitive as the degradation you declare you care
+about.** Declaring a milder tolerance costs queries (4 → 33) and buys
+sensitivity. A negative result is therefore never "the endpoint is honest" —
+it is "no degradation beyond `p1` was detected in `n` queries."
+
+Note also that `thinking_chars` reads 0 on Opus 5 even on the honest arm:
+thinking display defaults to `omitted`, so reasoning happens and is billed but
+is not surfaced. **Output tokens, not visible thinking, is the effort proxy.**
+
 ## Test suite
 
 `python tests.py` → **60/60 passing**, covering ground truth re-derivation

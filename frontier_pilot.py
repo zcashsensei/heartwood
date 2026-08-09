@@ -17,7 +17,8 @@ tiers = [int(x) for x in (sys.argv[2].split(",") if len(sys.argv) > 2
                           else ["3", "4", "5"])]
 fams = ["state_track"]
 
-p = providers.get_provider("anthropic")
+model = sys.argv[3] if len(sys.argv) > 3 else "claude-haiku-4-5"
+p = providers.get_provider("anthropic", model=model)
 print(f"model={p.model} think_budget={p.think_budget} "
       f"honest_max={p.honest_max} hollow_max={p.hollow_max}")
 print()

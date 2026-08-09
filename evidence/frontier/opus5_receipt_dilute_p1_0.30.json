@@ -1,0 +1,407 @@
+{
+ "version": "heartwood/0.2",
+ "pool": {
+  "seed": 20260808,
+  "difficulty": 5,
+  "commitment": "7587889741adc705954a8d86276e821db7d6a8d9d0b910b3591a199991839995",
+  "size": 300,
+  "families": [
+   "state_track"
+  ]
+ },
+ "beacon": {
+  "chain": "drand-mainnet-default",
+  "round": 6360411,
+  "randomness": "6e2ef3929512b7639177237993d39cd395c3796aa1793572d8e193ec5a272436",
+  "source": "drand"
+ },
+ "plan": {
+  "p0": 0.7870399178764141,
+  "p1": 0.3,
+  "alpha": 0.01,
+  "lambda": 2.9058259110309743,
+  "pool_size": 300,
+  "max_queries": 45,
+  "families": [
+   "state_track"
+  ]
+ },
+ "calibration": {
+  "n": 20,
+  "successes": 20,
+  "raw_rate": 1.0,
+  "method": "wilson_lower_99"
+ },
+ "code_hash": "ef2f949efc0d2f940c68d808fff1b7abd4546697a039908958c7871250a7fc6b",
+ "transcript": [
+  {
+   "item_id": 200,
+   "served_mode": "honest",
+   "question_sha256": "9f80dad9a066c2cbe488bb0a008fe8dd8d6b97953c0c5801dbc66a3994c7e845",
+   "response": "## Step-by-step\n\n| Step | Operation | Result |\n|------|-----------|--------|\n| Start | \u2014 | **53** |\n| 1 | \u2212 36 | 17 |\n| 2 | + 15 | 32 |\n| 3 | \u2212 8 | 24 |\n| 4 | + 25 | 49 |\n| 5 | + 2 | 51 |\n| 6 | \u00d7 3 | 153 |\n| 7 | \u00d7 3 | 459 |\n| 8 | \u00d7 2 | 918 |\n| 9 | \u2212 11 | 907 |\n| 10 | \u2212 14 | 893 |\n| 11 | + 27 | 920 |\n| 12 | + 2 | **922** |\n\n**Final answer: 922**",
+   "response_sha256": "9fa813c80165d81f3e02367cc2c7047233e9be42cb15e87660b1b2478e705594",
+   "graded": 1
+  },
+  {
+   "item_id": 101,
+   "served_mode": "honest",
+   "question_sha256": "aae56e430090d31dcf0a05afe64d61fa9eb64e9d722d6be49e5d0ea40cec57f6",
+   "response": "## Step-by-step\n\n| Step | Operation | Result |\n|------|-----------|--------|\n| Start | \u2014 | 67 |\n| 1 | \u2212 18 | 49 |\n| 2 | \u2212 35 | 14 |\n| 3 | + 27 | 41 |\n| 4 | \u00d7 2 | 82 |\n| 5 | \u2212 14 | 68 |\n| 6 | \u2212 32 | 36 |\n| 7 | \u2212 20 | 16 |\n| 8 | \u00d7 2 | 32 |\n| 9 | \u2212 11 | 21 |\n| 10 | + 34 | 55 |\n| 11 | + 33 | 88 |\n| 12 | \u00d7 3 | 264 |\n| 13 | \u00d7 2 | **528** |\n\n**Answer: 528**",
+   "response_sha256": "392b3f4e64d6f7e17cd12e1d73399f969f0f2670a0b0bab5ae30707f22131a4e",
+   "graded": 1
+  },
+  {
+   "item_id": 48,
+   "served_mode": "honest",
+   "question_sha256": "8fee0997355960a8df1065a95d33d99021f453ee5984db7cc39eae09067f323c",
+   "response": "## Step-by-step\n\n| Step | Operation | Result |\n|------|-----------|--------|\n| Start | \u2014 | **20** |\n| 1 | + 35 | 55 |\n| 2 | + 25 | 80 |\n| 3 | \u00d7 3 | 240 |\n| 4 | \u2212 6 | 234 |\n| 5 | + 20 | 254 |\n| 6 | \u00d7 2 | 508 |\n| 7 | + 15 | 523 |\n| 8 | + 15 | 538 |\n| 9 | + 29 | 567 |\n| 10 | + 22 | 589 |\n| 11 | + 15 | 604 |\n| 12 | \u00d7 3 | 1812 |\n| 13 | + 34 | **1846** |\n\n**Final answer: 1846**",
+   "response_sha256": "b836c7bcb3d53e76bb12231ee8f441fbb34bba6da7e4a4737fe553c3f08e1aa6",
+   "graded": 1
+  },
+  {
+   "item_id": 240,
+   "served_mode": "hollow",
+   "question_sha256": "4da41db4e10043ed5a07011c06537f5e6e837301b36e3e55610682c69ccecbc0",
+   "response": "263",
+   "response_sha256": "4be84111a613654b362415e563cb7607df7b203b5d303802a8a546061bbc7847",
+   "graded": 0
+  },
+  {
+   "item_id": 276,
+   "served_mode": "hollow",
+   "question_sha256": "f08db033cfae7593b4075473e8ab8512c36130b69bb0aa0bf81edec04b7a4d3b",
+   "response": "328",
+   "response_sha256": "2452984f72ef1195df62ab3f23748777dbf39767229425f1bfd0862d476e5840",
+   "graded": 0
+  },
+  {
+   "item_id": 192,
+   "served_mode": "hollow",
+   "question_sha256": "2814296f7d5e9dbfd49a38d299d60a17f40abf99561d1e5a513d84fd482b8d72",
+   "response": "5236",
+   "response_sha256": "c9eda60a6272a0f1ba21732012be0ffd1834860cd81502cea057922c6999efc4",
+   "graded": 0
+  },
+  {
+   "item_id": 250,
+   "served_mode": "honest",
+   "question_sha256": "84eac9651daa5557ed3e5472a7227f195e85441ac0cf8a0e4f8bed4ef2e966bc",
+   "response": "## Step-by-step\n\n| Operation | Result |\n|---|---|\n| Start | 55 |\n| + 2 | 57 |\n| + 27 | 84 |\n| + 23 | 107 |\n| \u2212 33 | 74 |\n| + 13 | 87 |\n| \u00d7 2 | 174 |\n| \u00d7 2 | 348 |\n| \u00d7 2 | 696 |\n| \u2212 7 | 689 |\n| \u2212 11 | 678 |\n| \u2212 2 | 676 |\n| + 36 | **712** |\n\n**Final answer: 712**",
+   "response_sha256": "e745b2a7d49f1fdfd020c731457d02a202cbfc67b7b1992aa2991996a71ff714",
+   "graded": 1
+  },
+  {
+   "item_id": 171,
+   "served_mode": "honest",
+   "question_sha256": "34ed00a35a0532578cd1c95edc5b3d81b3e4f16cfc9a3051a4ff050570c5c8db",
+   "response": "## Step-by-step\n\n| Step | Operation | Result |\n|---|---|---|\n| Start | \u2014 | **86** |\n| 1 | \u2212 24 | 62 |\n| 2 | \u2212 30 | 32 |\n| 3 | \u2212 20 | 12 |\n| 4 | \u2212 2 | 10 |\n| 5 | + 18 | 28 |\n| 6 | \u2212 11 | 17 |\n| 7 | \u00d7 3 | 51 |\n| 8 | \u00d7 2 | 102 |\n| 9 | + 2 | 104 |\n| 10 | \u00d7 3 | 312 |\n| 11 | \u2212 35 | 277 |\n| 12 | \u00d7 3 | 831 |\n| 13 | \u2212 34 | **797** |\n\n**Final answer: 797**",
+   "response_sha256": "91d9f22a52d0713a6ead8a19baf406cdfbfd825afaa97d7925549ff16c46b188",
+   "graded": 1
+  },
+  {
+   "item_id": 164,
+   "served_mode": "hollow",
+   "question_sha256": "1c0e876e6f89ad4b9fb89f7200e17b58740d1358f9542e081b9a0bcf478d9a00",
+   "response": "2154",
+   "response_sha256": "9e3b6232cb7bd60ef9c5088e1c6dac834ddc05d916e88e2aacf84bb18c8d707a",
+   "graded": 0
+  },
+  {
+   "item_id": 288,
+   "served_mode": "hollow",
+   "question_sha256": "04ed92bd0f7fee884d921838aa80f5a8521e43280359a0d8840844753a657ad4",
+   "response": "113329",
+   "response_sha256": "d54f0a8658124cc6a73fa6b6baa5dc4a6d85ef5d6f14b045a79919a62110629b",
+   "graded": 0
+  },
+  {
+   "item_id": 236,
+   "served_mode": "honest",
+   "question_sha256": "391f15f2b3669a066473f1ab95f3aede6dfbf8c817ecff87aa396c80e9068b63",
+   "response": "## Step-by-step\n\n| Operation | Result |\n|---|---|\n| Start | **99** |\n| \u2212 33 | 66 |\n| + 18 | 84 |\n| + 4 | 88 |\n| \u2212 20 | 68 |\n| \u2212 14 | 54 |\n| \u00d7 2 | 108 |\n| + 30 | 138 |\n| \u2212 29 | 109 |\n| + 4 | 113 |\n| + 15 | 128 |\n| \u00d7 3 | 384 |\n| \u00d7 3 | 1152 |\n| + 36 | **1188** |\n\n**Final answer: 1188**",
+   "response_sha256": "0e7ca55da02ec0910b0aae453389eed89745d3d9edcd1981d844b7eeb4bea505",
+   "graded": 1
+  },
+  {
+   "item_id": 157,
+   "served_mode": "honest",
+   "question_sha256": "5c24c84d0fb10826b11df30cf45551964880d75679212d4d96fa80a6b88ae246",
+   "response": "## Step-by-step\n\n| Step | Operation | Result |\n|---|---|---|\n| Start | \u2014 | 61 |\n| Add 30 | 61 + 30 | 91 |\n| Add 21 | 91 + 21 | 112 |\n| Multiply by 2 | 112 \u00d7 2 | 224 |\n| Add 34 | 224 + 34 | 258 |\n| Subtract 30 | 258 \u2212 30 | 228 |\n| Subtract 11 | 228 \u2212 11 | 217 |\n| Multiply by 3 | 217 \u00d7 3 | 651 |\n| Add 32 | 651 + 32 | 683 |\n| Subtract 20 | 683 \u2212 20 | 663 |\n| Multiply by 2 | 663 \u00d7 2 | 1326 |\n| Multiply by 2 | 1326 \u00d7 2 | 2652 |\n| Add 26 | 2652 + 26 | 2678 |\n| Multiply by 3 | 2678 \u00d7 3 | 8034 |\n| Subtract 10 | 8034 \u2212 10 | **8024** |\n\n**Final answer: 8024**",
+   "response_sha256": "b85549bc8c6ab081b12d5506a8158e1ff7f4d503f62260c3638a75752db8cbf0",
+   "graded": 1
+  },
+  {
+   "item_id": 290,
+   "served_mode": "hollow",
+   "question_sha256": "683a209060682de632b50e512b3024b062000d9ba33440340788aeec55fb4b4f",
+   "response": "208",
+   "response_sha256": "8df66f64b57424391d363fd6b811fed3c430c77597da265025728bd637bad804",
+   "graded": 1
+  },
+  {
+   "item_id": 215,
+   "served_mode": "hollow",
+   "question_sha256": "a1f1c0ae730ebe9eba7a6202e6deddb4119372a18bac1b837f75586d8f0b48bb",
+   "response": "1082",
+   "response_sha256": "3ef58410b868298fcca4ee41144221bf86bc94e810dfdac6f4b502ce5fcd75c6",
+   "graded": 0
+  },
+  {
+   "item_id": 59,
+   "served_mode": "honest",
+   "question_sha256": "e84151168435757173a02a5540c61609b86a42294e8a4fc0ed46138eef2d29bc",
+   "response": "## Step-by-step\n\n| Step | Operation | Result |\n|------|-----------|--------|\n| Start | \u2014 | **93** |\n| 1 | \u00d7 3 | 279 |\n| 2 | \u00d7 2 | 558 |\n| 3 | + 21 | 579 |\n| 4 | + 26 | 605 |\n| 5 | \u00d7 3 | 1,815 |\n| 6 | \u00d7 2 | 3,630 |\n| 7 | \u00d7 3 | 10,890 |\n| 8 | + 22 | 10,912 |\n| 9 | + 23 | 10,935 |\n| 10 | \u00d7 3 | 32,805 |\n| 11 | \u00d7 2 | 65,610 |\n| 12 | + 23 | 65,633 |\n| 13 | \u00d7 3 | **196,899** |\n\n**Final answer: 196,899**",
+   "response_sha256": "e1cecc7fe83249f7390bc3d49dbb79fcc559ac51be35b9ecb1e375f0563214dd",
+   "graded": 1
+  },
+  {
+   "item_id": 115,
+   "served_mode": "hollow",
+   "question_sha256": "30a5ea24cb20b165ccbe120881abb5a6d0434ed3068f9f6a31ee26cf77b9177d",
+   "response": "1372",
+   "response_sha256": "a2144767f33525b47ccdbeb90311911fc7966c0975d14ae1df69712264d9ad47",
+   "graded": 1
+  },
+  {
+   "item_id": 298,
+   "served_mode": "honest",
+   "question_sha256": "9080a9b5203a23cba47df543f8a763aeeae8c42b3b7ae50218828f22a6282d4b",
+   "response": "## Step-by-step\n\n| Operation | Result |\n|---|---|\n| Start | 77 |\n| \u00d7 2 | 154 |\n| + 35 | 189 |\n| \u2212 21 | 168 |\n| \u00d7 3 | 504 |\n| \u00d7 2 | 1008 |\n| \u00d7 2 | 2016 |\n| + 22 | 2038 |\n| \u00d7 3 | 6114 |\n| \u00d7 2 | 12228 |\n| + 20 | 12248 |\n| \u00d7 2 | 24496 |\n| \u00d7 2 | **48992** |\n\n**Final answer: 48,992**",
+   "response_sha256": "6d36f61d209744e79e9ebe1cb31c206503e65af22918d98b98d90abbdd98c3cc",
+   "graded": 1
+  },
+  {
+   "item_id": 143,
+   "served_mode": "honest",
+   "question_sha256": "2974d4add9c31e1e7c970838ee3280b4e242d29c0003123bcfc9999f37c766bf",
+   "response": "## Step-by-step\n\n| Step | Operation | Result |\n|------|-----------|--------|\n| Start | \u2014 | **80** |\n| Add 29 | 80 + 29 | 109 |\n| Subtract 10 | 109 \u2212 10 | 99 |\n| Multiply by 2 | 99 \u00d7 2 | 198 |\n| Add 26 | 198 + 26 | 224 |\n| Add 40 | 224 + 40 | 264 |\n| Add 12 | 264 + 12 | 276 |\n| Add 17 | 276 + 17 | 293 |\n| Add 34 | 293 + 34 | 327 |\n| Multiply by 3 | 327 \u00d7 3 | 981 |\n| Add 17 | 981 + 17 | 998 |\n| Multiply by 3 | 998 \u00d7 3 | 2994 |\n| Subtract 21 | 2994 \u2212 21 | 2973 |\n| Multiply by 2 | 2973 \u00d7 2 | **5946** |\n\n**Final answer: 5946**",
+   "response_sha256": "d731a60cd6f3f12f3dfb86e7d1d708339bf4c274e94b707af9ed1b169faef567",
+   "graded": 1
+  },
+  {
+   "item_id": 216,
+   "served_mode": "hollow",
+   "question_sha256": "6e9eca5da0f79274ffaa8c9d9f32396bd8e8219a5e67959d2f603b1fdc5922ee",
+   "response": "1\u62bc... \n\nLet me give the answer: **1017**",
+   "response_sha256": "02e93e3f2b1d2047fc32d60a848c3215599a265163658daa464745281debd19d",
+   "graded": 0
+  },
+  {
+   "item_id": 90,
+   "served_mode": "honest",
+   "question_sha256": "8b9c2dd985794cf1ddedbf7ddb5bcaa2c6da0256ca0eb7a12c72b96f2e52492a",
+   "response": "## Step-by-step\n\n| Step | Operation | Result |\n|------|-----------|--------|\n| Start | \u2014 | 95 |\n| \u00d72 | 95 \u00d7 2 | 190 |\n| +27 | 190 + 27 | 217 |\n| \u22126 | 217 \u2212 6 | 211 |\n| \u00d72 | 211 \u00d7 2 | 422 |\n| +4 | 422 + 4 | 426 |\n| +21 | 426 + 21 | 447 |\n| \u00d72 | 447 \u00d7 2 | 894 |\n| +3 | 894 + 3 | 897 |\n| +28 | 897 + 28 | 925 |\n| \u221231 | 925 \u2212 31 | 894 |\n| +5 | 894 + 5 | 899 |\n| \u221226 | 899 \u2212 26 | **873** |\n\n**Final answer: 873**",
+   "response_sha256": "aa59fdbffa83de710e0c60857a992d19acab176245d6aebcc4ec8b273f9ca6a3",
+   "graded": 1
+  },
+  {
+   "item_id": 258,
+   "served_mode": "hollow",
+   "question_sha256": "abf0d6d480ec9bb94736ec1562281da1e58eb3dcc79bfd6917811f2f31869d51",
+   "response": "356328",
+   "response_sha256": "cdd732ade059953c5ce30ea0890130f6420d45de4a7af2f9ca4eb2e71dcfa16c",
+   "graded": 0
+  },
+  {
+   "item_id": 295,
+   "served_mode": "honest",
+   "question_sha256": "10ee0ec2ff649be96197565fecaf9d4e3b010e485bda22d7b297ed88606d3d66",
+   "response": "## Step-by-Step Calculation\n\n| Step | Operation | Result |\n|------|-----------|--------|\n| Start | \u2014 | **79** |\n| 1 | \u00d7 2 | 158 |\n| 2 | \u00d7 3 | 474 |\n| 3 | \u2212 20 | 454 |\n| 4 | + 39 | 493 |\n| 5 | \u2212 16 | 477 |\n| 6 | \u00d7 2 | 954 |\n| 7 | \u2212 28 | 926 |\n| 8 | \u2212 19 | 907 |\n| 9 | \u2212 30 | 877 |\n| 10 | + 10 | 887 |\n| 11 | \u00d7 2 | 1774 |\n| 12 | \u00d7 2 | **3548** |\n\n**Final answer: 3548**",
+   "response_sha256": "0e7fa573c33f618c3fc131cdeda4a115bfaf5f8c11cc68103bbaada3b883a50c",
+   "graded": 1
+  },
+  {
+   "item_id": 123,
+   "served_mode": "honest",
+   "question_sha256": "47fa16e633e6d4128080fcc6958191bb87afe096ed0bd71a91bf6bd504a920a7",
+   "response": "## Step-by-step\n\n| Operation | Result |\n|---|---|\n| Start | 80 |\n| \u2212 27 | 53 |\n| + 23 | 76 |\n| + 15 | 91 |\n| + 19 | 110 |\n| + 28 | 138 |\n| \u2212 26 | 112 |\n| \u2212 9 | 103 |\n| \u00d7 2 | 206 |\n| + 37 | 243 |\n| \u00d7 3 | 729 |\n| + 14 | 743 |\n| \u2212 10 | 733 |\n| \u2212 38 | 695 |\n| + 9 | **704** |\n\n**Final answer: 704**",
+   "response_sha256": "58722c5b02bc0c0548a206f1537af1d35e04d0f03633ad2cf4944ef9ab5d4061",
+   "graded": 1
+  },
+  {
+   "item_id": 223,
+   "served_mode": "hollow",
+   "question_sha256": "4a4238002ef1970c397ea2df4a9e283819df8003aa7a58ea385eb54ebc673c78",
+   "response": "26",
+   "response_sha256": "5f9c4ab08cac7457e9111a30e4664920607ea2c115a1433d7be98e97e64244ca",
+   "graded": 1
+  },
+  {
+   "item_id": 176,
+   "served_mode": "honest",
+   "question_sha256": "92f2f3cb23d29c8805f9be407bb9c50d0f34750ccfe894e10d19e15cef79a416",
+   "response": "## Step-by-step\n\n| Step | Operation | Result |\n|---|---|---|\n| Start | \u2014 | 79 |\n| 1 | \u2212 11 | 68 |\n| 2 | + 34 | 102 |\n| 3 | + 32 | 134 |\n| 4 | \u00d7 3 | 402 |\n| 5 | \u00d7 2 | 804 |\n| 6 | + 32 | 836 |\n| 7 | \u00d7 2 | 1672 |\n| 8 | \u2212 35 | 1637 |\n| 9 | \u2212 15 | 1622 |\n| 10 | \u2212 37 | 1585 |\n| 11 | \u00d7 2 | 3170 |\n| 12 | \u2212 18 | 3152 |\n| 13 | + 11 | 3163 |\n| 14 | + 32 | **3195** |\n\n**Final answer: 3195**",
+   "response_sha256": "b6ca58cbf947f94d160941bbf3b2ec2dac8002172cd9b7cc7cd433743143f405",
+   "graded": 1
+  },
+  {
+   "item_id": 153,
+   "served_mode": "hollow",
+   "question_sha256": "9607de5e0a47676812b0e07c017e9d3d002b25d1072026b812bb9db62f376af6",
+   "response": "579",
+   "response_sha256": "59b524f8de039389005bce58385cae1d9241abd663e87647727abc8802e85c3b",
+   "graded": 0
+  },
+  {
+   "item_id": 110,
+   "served_mode": "hollow",
+   "question_sha256": "6775923d9eb1daf2922a0869397020ed5600bedf325c48221f4e663ea9600993",
+   "response": "1074",
+   "response_sha256": "fde3f2e7127f6810eb4160bf7bb0563240d78c9d75a9a590b6d6244748a7f4ff",
+   "graded": 0
+  },
+  {
+   "item_id": 281,
+   "served_mode": "hollow",
+   "question_sha256": "bd6fe5e216ce563ff44c0c70787cd05f48273c82bfa1cf73e18796481d293d9f",
+   "response": "1650",
+   "response_sha256": "4ab34cdf3e765ab1629ed66b4d683a8d5bd014b8b7e8f2f3edd4cfab45101031",
+   "graded": 0
+  },
+  {
+   "item_id": 211,
+   "served_mode": "honest",
+   "question_sha256": "b19aeaaf59b48ef9ba26d715871ec7e9b1bbd3dfde2fd4c7d0837081baecbe4c",
+   "response": "## Step-by-step\n\n| Step | Operation | Result |\n|------|-----------|--------|\n| Start | \u2014 | **62** |\n| 1 | \u00d7 2 | 124 |\n| 2 | + 4 | 128 |\n| 3 | \u00d7 3 | 384 |\n| 4 | + 40 | 424 |\n| 5 | + 4 | 428 |\n| 6 | \u2212 30 | 398 |\n| 7 | \u2212 9 | 389 |\n| 8 | \u00d7 2 | 778 |\n| 9 | + 40 | 818 |\n| 10 | + 40 | 858 |\n| 11 | + 2 | 860 |\n| 12 | \u2212 12 | **848** |\n\n**Final answer: 848**",
+   "response_sha256": "4c648b3fd1a25edfc4f8e04905c8ceea12a1d190e2ae8b705e1e085aa16ec33f",
+   "graded": 1
+  },
+  {
+   "item_id": 218,
+   "served_mode": "hollow",
+   "question_sha256": "53a282b9ce63bca63ee8afc740a84b50b3d7c71aac7b5bc7a31bdacfa9b9bf59",
+   "response": "1470",
+   "response_sha256": "57fb0303e4a6845cd7a1484ee9773c218975e9c9a763114e668259498cad2f30",
+   "graded": 0
+  },
+  {
+   "item_id": 165,
+   "served_mode": "hollow",
+   "question_sha256": "c556f30ce06ada72016502771246b724a464dacd915918b7819ff3204d6bfee1",
+   "response": "26492",
+   "response_sha256": "68206c4949fc2c4ee0eaf0821309763314a2f4a644499c697d72cf2430dadf43",
+   "graded": 0
+  },
+  {
+   "item_id": 179,
+   "served_mode": "honest",
+   "question_sha256": "36c2368eb08b74f20e7b31a86d4b310c86e0bad4002f91e35ebc3fca6c83b421",
+   "response": "## Step-by-step\n\n| Step | Operation | Result |\n|---|---|---|\n| Start | \u2014 | **91** |\n| 1 | + 14 | 105 |\n| 2 | + 4 | 109 |\n| 3 | + 40 | 149 |\n| 4 | + 28 | 177 |\n| 5 | \u00d7 3 | 531 |\n| 6 | + 8 | 539 |\n| 7 | \u2212 24 | 515 |\n| 8 | \u00d7 2 | 1030 |\n| 9 | \u2212 4 | 1026 |\n| 10 | + 22 | 1048 |\n| 11 | \u2212 21 | 1027 |\n| 12 | \u00d7 2 | 2054 |\n| 13 | \u00d7 3 | **6162** |\n\n**Final answer: 6162**",
+   "response_sha256": "eb3a9e8dc5db5c0ca81cc74ecc5329884acb26fe64390144780e5eb57cb8c246",
+   "graded": 1
+  },
+  {
+   "item_id": 18,
+   "served_mode": "hollow",
+   "question_sha256": "22fd3290b0dc238b12175449001b2e88605dce4ed6eb9c7a3d2f22379508f953",
+   "response": "213",
+   "response_sha256": "d48ff4b2f68a10fd7c86f185a6ccede0dc0f2c48538d697cb33b6ada3f1e85db",
+   "graded": 0
+  },
+  {
+   "item_id": 109,
+   "served_mode": "honest",
+   "question_sha256": "d0ce2fe8b864cc18591ec002d85c2b3ebf0c6d5ac65b0b1099bf5dcbb5195dd7",
+   "response": "## Step-by-step\n\n| Operation | Result |\n|---|---|\n| Start | 84 |\n| \u00d7 2 | 168 |\n| \u00d7 3 | 504 |\n| \u2212 22 | 482 |\n| \u2212 39 | 443 |\n| \u2212 25 | 418 |\n| + 24 | 442 |\n| + 30 | 472 |\n| \u2212 26 | 446 |\n| + 32 | 478 |\n| + 17 | 495 |\n| \u2212 19 | 476 |\n| \u2212 30 | 446 |\n| \u00d7 2 | 892 |\n| \u2212 11 | **881** |\n\nThe final answer is **881**.",
+   "response_sha256": "4f8980d70cc1ef624f05b0b42b5c707066569761c7e209a23e7b5d839aefc795",
+   "graded": 1
+  },
+  {
+   "item_id": 186,
+   "served_mode": "hollow",
+   "question_sha256": "05852e0841fd44808de47535a8867fe16ae97474fa498d7f936117792408174d",
+   "response": "2550",
+   "response_sha256": "a025f0314b164d72f92e11bd860ebbc0558addbeb5cf3ae1f06c4eded1d63ddc",
+   "graded": 1
+  },
+  {
+   "item_id": 24,
+   "served_mode": "honest",
+   "question_sha256": "2ed03c1d5b83c0c21ac1f8d4b384657cc5f35e0879d720e2a8c41a0ddab42299",
+   "response": "## Step-by-step\n\n| Operation | Result |\n|---|---|\n| Start | 25 |\n| \u00d7 2 | 50 |\n| + 7 | 57 |\n| \u00d7 3 | 171 |\n| \u00d7 2 | 342 |\n| \u2212 7 | 335 |\n| \u00d7 3 | 1005 |\n| + 11 | 1016 |\n| + 7 | 1023 |\n| + 7 | 1030 |\n| \u00d7 2 | 2060 |\n| \u2212 9 | 2051 |\n| \u2212 3 | 2048 |\n| + 33 | 2081 |\n| \u00d7 3 | **6243** |\n\n**The final number is 6243.**",
+   "response_sha256": "0a2e45256a812a1dd42ce28221e0d19119701b1f24233860c9dc6d28da7c9e8c",
+   "graded": 1
+  },
+  {
+   "item_id": 134,
+   "served_mode": "hollow",
+   "question_sha256": "820300208d4dd2e1ee8c8dc2621390b37173535aa61ad3d3e3cf22716f72e11f",
+   "response": "266",
+   "response_sha256": "ea5b27556fbb134def2c2fbf944d9cdda3dbdb6b10473a1aec59f6f170c4ca3a",
+   "graded": 0
+  },
+  {
+   "item_id": 4,
+   "served_mode": "hollow",
+   "question_sha256": "f40c0f16636b25906b37a1ee34631f147574d84681ea150a6ac0f96ba58c9779",
+   "response": "3908",
+   "response_sha256": "03f65a290e11d78647e557030042d74d268521768c4a1648264a1b38047a4b37",
+   "graded": 0
+  },
+  {
+   "item_id": 8,
+   "served_mode": "honest",
+   "question_sha256": "8e42a2884f0a653ba6d30dbda3af2fe737b9f9d4e7428cf70ea6f530dca7219a",
+   "response": "## Step-by-step\n\n| Operation | Result |\n|---|---|\n| Start | 72 |\n| + 8 | 80 |\n| + 38 | 118 |\n| \u2212 7 | 111 |\n| \u00d7 3 | 333 |\n| \u2212 8 | 325 |\n| \u2212 36 | 289 |\n| \u2212 7 | 282 |\n| \u00d7 3 | 846 |\n| \u2212 2 | 844 |\n| \u2212 2 | 842 |\n| \u2212 28 | 814 |\n| \u00d7 2 | **1628** |\n\n**Final answer: 1628**",
+   "response_sha256": "1b24a463f3b026b466b199c3892a38c962bb7ec434610dd021bfb581fe0529c0",
+   "graded": 1
+  },
+  {
+   "item_id": 279,
+   "served_mode": "hollow",
+   "question_sha256": "e60b9a17bd2a4b8af9ab1f5d12787e3a5a0f8d0b2b04ea48ebb565f965be4fa2",
+   "response": "330",
+   "response_sha256": "5426d2ca50f244fb43fe9eafc82da08f33f3b4f8d9140802bd0102e780b629d6",
+   "graded": 1
+  },
+  {
+   "item_id": 256,
+   "served_mode": "hollow",
+   "question_sha256": "3301fe21ea232aa7f723ca37d84111cea2a70be78f3e11f4bacb837eb6edf3c5",
+   "response": "225",
+   "response_sha256": "0e6523810856a138a75dec70a9cf3778a5c70b83ac915f22c33f05db97cb3e68",
+   "graded": 0
+  },
+  {
+   "item_id": 158,
+   "served_mode": "honest",
+   "question_sha256": "45aebd1cb0795e2d6fbcf10754e5f691a9d5da1821967eb0636ac085b6ba11c4",
+   "response": "## Step-by-step\n\n| Operation | Result |\n|---|---|\n| Start | 88 |\n| \u00d7 3 | 264 |\n| + 13 | 277 |\n| \u2212 6 | 271 |\n| \u00d7 2 | 542 |\n| \u00d7 3 | 1626 |\n| \u00d7 2 | 3252 |\n| \u2212 7 | 3245 |\n| \u2212 2 | 3243 |\n| \u00d7 2 | 6486 |\n| + 21 | 6507 |\n| \u00d7 3 | **19521** |\n\n**Final answer: 19,521**",
+   "response_sha256": "3d7644b349f9eb6025eab79ccb0f190a7f93d7a47ca1b7f6f56c61bf2c62a21f",
+   "graded": 1
+  },
+  {
+   "item_id": 21,
+   "served_mode": "honest",
+   "question_sha256": "8320c7fb82f9fa437e3335130e42772e13bf9e76a8e9b45e3446c23d4906208e",
+   "response": "## Step-by-step\n\n| Step | Operation | Result |\n|------|-----------|--------|\n| Start | \u2014 | **11** |\n| 1 | \u2212 2 | 9 |\n| 2 | \u2212 5 | 4 |\n| 3 | \u00d7 2 | 8 |\n| 4 | \u2212 4 | 4 |\n| 5 | \u00d7 2 | 8 |\n| 6 | \u00d7 2 | 16 |\n| 7 | \u00d7 3 | 48 |\n| 8 | + 22 | 70 |\n| 9 | + 2 | 72 |\n| 10 | + 37 | 109 |\n| 11 | \u2212 29 | 80 |\n| 12 | \u2212 29 | 51 |\n| 13 | \u2212 16 | **35** |\n\n**Final answer: 35**",
+   "response_sha256": "2556039784d1b059494337583c0b7335b2525e444b7cfa002c49fabbbf593509",
+   "graded": 1
+  },
+  {
+   "item_id": 249,
+   "served_mode": "honest",
+   "question_sha256": "65ebe8815b5524bd25322a6f4c96bf1d4f296b79e017321222c2324571cf566b",
+   "response": "## Step-by-step\n\n| Step | Operation | Result |\n|------|-----------|--------|\n| Start | \u2014 | 30 |\n| 1 | + 19 | 49 |\n| 2 | + 20 | 69 |\n| 3 | \u00d7 2 | 138 |\n| 4 | \u00d7 2 | 276 |\n| 5 | \u2212 26 | 250 |\n| 6 | + 28 | 278 |\n| 7 | + 13 | 291 |\n| 8 | \u2212 26 | 265 |\n| 9 | \u2212 19 | 246 |\n| 10 | \u2212 9 | 237 |\n| 11 | + 38 | 275 |\n| 12 | \u2212 33 | 242 |\n| 13 | + 35 | 277 |\n| 14 | \u2212 25 | 252 |\n\n**Final answer: 252**",
+   "response_sha256": "a89af7c0bff97d714cd96219391eac9bbbdd0780cf63564aa9c36ccc0f624ee7",
+   "graded": 1
+  },
+  {
+   "item_id": 25,
+   "served_mode": "hollow",
+   "question_sha256": "ff81d15063d780307196cec664181f99aa2ad5b435c1a3af31eac1cf287daeca",
+   "response": "1128",
+   "response_sha256": "94c47d91f1bebd7b85fb5b4210cb24a8125beaf843e6e4a7a80698817c79ae64",
+   "graded": 0
+  }
+ ],
+ "result": {
+  "n_queries": 45,
+  "successes": 27,
+  "observed_rate": 0.6,
+  "peak_log10_wealth": 0.4896216461394137,
+  "log10_threshold": 2.0,
+  "rejected_at": null,
+  "verdict": "NO_EVIDENCE_OF_DEFICIT"
+ }
+}

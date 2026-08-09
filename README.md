@@ -1,6 +1,12 @@
+<img src="docs/logo.svg" alt="Heartwood" width="72" align="left" hspace="16">
+
 # Heartwood
 
 **A publicly verifiable proof that an LLM endpoint actually spent the compute you paid for — requiring zero cooperation from the provider.**
+
+<br clear="left">
+
+🌐 **[heartwood site →](https://zcashsensei.github.io/heartwood/)**
 
 > Hollow-LLM shows the trunk can be empty. Heartwood proves it is solid.
 
@@ -102,20 +108,27 @@ response hashes, regrading, the declared bet, and the verdict.
 
 ## Results
 
-### On a production frontier API
+### On production frontier APIs
 
-Run against **Claude Haiku 4.5** through the Anthropic Messages API. Same
-model, same weights, same signed response — only the compute per request
-differs (~30× fewer tokens generated).
+Run against **Claude Haiku 4.5** and **Claude Opus 5** through the Anthropic
+Messages API. Same model, same weights, same signed response — only the compute
+per request differs (~30× fewer tokens generated).
 
-| endpoint | verdict | queries | peak evidence |
+| model | endpoint | verdict | queries |
 |---|---|---|---|
-| honest | NO_EVIDENCE_OF_DEFICIT | 60 | 10^−0.45 |
-| **effort-skimmed** | **EFFORT_DEFICIT** | **4** | 10^+2.64 |
-| **50% dilution** | **EFFORT_DEFICIT** | **14** | 10^+2.58 |
+| Haiku 4.5 | honest | no deficit (evidence → 10⁻²⁷) | 60 |
+| Haiku 4.5 | **effort-skimmed** | **EFFORT_DEFICIT** | **4** |
+| Haiku 4.5 | **50% dilution** | **EFFORT_DEFICIT** | **14** |
+| Opus 5 | honest | no deficit | 45 |
+| Opus 5 | **effort-skimmed** | **EFFORT_DEFICIT** | **4** |
+| Opus 5 | 50% dilution @ p1=0.65 | **EFFORT_DEFICIT** | 33 |
 
-All three receipts verify independently. Over 60 honest queries the evidence
-decayed to 10^−27 — no false positive, not a close call.
+Every receipt verifies independently. No false positive on either honest arm.
+
+**The capability band belongs to the model, not the protocol.** Opus 5 solves
+an 8-step chain in **3 output tokens** with no deliberation — audit it with
+Haiku's difficulty tier and every query is uninformative. Calibration is what
+finds the band, and it is the step you cannot skip.
 
 **The sharper the model, the cheaper the audit.** A capable model fails harder
 when its compute is removed, so each query carries more evidence: full skim

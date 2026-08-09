@@ -124,18 +124,40 @@ class AnthropicProvider:
         if not self.key:
             raise RuntimeError("no Anthropic API key available")
 
+    # Thinking configuration is MODEL-DEPENDENT and getting it wrong is a 400.
+    #   pre-4.6 (Haiku 4.5): {"type":"enabled","budget_tokens":N}, N < max_tokens
+    #   4.6+   (Opus 5 etc): {"type":"adaptive"}; budget_tokens is REMOVED,
+    #                        and on Opus 5 thinking is ON by default, while
+    #                        {"type":"disabled"} is only accepted at effort
+    #                        <= high (400 at xhigh/max).
+    ADAPTIVE_MODELS = ("opus-5", "opus-4-8", "opus-4-7", "opus-4-6",
+                       "sonnet-5", "sonnet-4-6", "fable-5", "mythos-5")
+
+    def _is_adaptive(self):
+        return any(m in self.model for m in self.ADAPTIVE_MODELS)
+
     def query(self, question, mode):
         body = {
             "model": self.model,
             "messages": [{"role": "user", "content": question}],
         }
+        adaptive = self._is_adaptive()
         if mode == "honest":
             body["max_tokens"] = self.honest_max
-            body["thinking"] = {"type": "enabled",
-                                "budget_tokens": self.think_budget}
+            if adaptive:
+                body["thinking"] = {"type": "adaptive"}
+                body["output_config"] = {"effort": "high"}
+            else:
+                body["thinking"] = {"type": "enabled",
+                                    "budget_tokens": self.think_budget}
         else:
-            body["max_tokens"] = self.hollow_max   # no thinking field = no thinking
-            body["system"] = self.SKIM_SYSTEM      # provider-injected, customer-invisible
+            body["max_tokens"] = self.hollow_max
+            body["system"] = self.SKIM_SYSTEM   # provider-injected, customer-invisible
+            if adaptive:
+                # Must disable explicitly: on Opus 5 an omitted `thinking`
+                # still thinks. Effort stays <= high or the pairing 400s.
+                body["thinking"] = {"type": "disabled"}
+                body["output_config"] = {"effort": "low"}
 
         req = urllib.request.Request(
             self.URL, data=json.dumps(body).encode(),

@@ -1,0 +1,302 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Heartwood — proof that an LLM endpoint spent the compute you paid for</title>
+<meta name="description" content="A publicly verifiable audit proving an LLM endpoint actually spent the compute you paid for. Zero provider cooperation. Detected an effort skim on Claude Opus 5 in 4 queries.">
+<link rel="icon" href="logo.svg" type="image/svg+xml">
+<style>
+  :root{
+    --bg:#fbf9f6; --panel:#fff; --ink:#1a1714; --muted:#6b625a;
+    --line:#e3ddd4; --accent:#9a4a1e; --accent-soft:#f3e6dd;
+    --good:#2f6b46; --bad:#9a2a2a;
+    --mono:ui-monospace,SFMono-Regular,"SF Mono",Menlo,Consolas,monospace;
+    --sans:ui-sans-serif,system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;
+  }
+  @media (prefers-color-scheme:dark){
+    :root:not([data-theme="light"]){
+      --bg:#14120f; --panel:#1c1916; --ink:#efe9e1; --muted:#a49a8e;
+      --line:#2e2924; --accent:#e0895a; --accent-soft:#2b201a;
+      --good:#6fbf8f; --bad:#e0736f;
+    }
+  }
+  :root[data-theme="dark"]{
+    --bg:#14120f; --panel:#1c1916; --ink:#efe9e1; --muted:#a49a8e;
+    --line:#2e2924; --accent:#e0895a; --accent-soft:#2b201a;
+    --good:#6fbf8f; --bad:#e0736f;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--sans);
+       line-height:1.62;-webkit-font-smoothing:antialiased}
+  .wrap{max-width:60rem;margin:0 auto;padding:0 1.5rem}
+  a{color:var(--accent);text-underline-offset:.18em}
+
+  header{padding:4.5rem 0 2.5rem;border-bottom:1px solid var(--line)}
+  .brand{display:flex;align-items:center;gap:1rem;margin-bottom:1.75rem}
+  .brand svg{width:56px;height:56px;color:var(--accent);flex:none}
+  .brand h1{font-size:2.1rem;margin:0;letter-spacing:-.02em;font-weight:650}
+  .brand .sub{color:var(--muted);font-size:.9rem;margin-top:.15rem;
+              font-family:var(--mono)}
+  .lede{font-size:1.28rem;max-width:46rem;margin:0 0 1.25rem;line-height:1.5}
+  .epigraph{border-left:3px solid var(--accent);padding:.15rem 0 .15rem 1rem;
+            color:var(--muted);font-style:italic;margin:0 0 2rem;max-width:44rem}
+  .cta{display:flex;gap:.7rem;flex-wrap:wrap;margin-top:1.5rem}
+  .btn{display:inline-block;padding:.6rem 1.1rem;border-radius:.45rem;
+       text-decoration:none;font-size:.94rem;font-weight:550;border:1px solid var(--line)}
+  .btn.primary{background:var(--accent);color:var(--bg);border-color:var(--accent)}
+  .btn.ghost{color:var(--ink)}
+
+  section{padding:3.25rem 0;border-bottom:1px solid var(--line)}
+  h2{font-size:1.45rem;margin:0 0 .5rem;letter-spacing:-.01em}
+  h2 .n{font-family:var(--mono);color:var(--accent);font-size:.8em;margin-right:.55rem}
+  .note{color:var(--muted);max-width:46rem}
+
+  .scroll{overflow-x:auto;margin:1.5rem 0;border:1px solid var(--line);
+          border-radius:.55rem;background:var(--panel)}
+  table{border-collapse:collapse;width:100%;font-size:.93rem;min-width:34rem}
+  th,td{padding:.62rem .85rem;text-align:left;border-bottom:1px solid var(--line)}
+  th{font-size:.74rem;text-transform:uppercase;letter-spacing:.07em;
+     color:var(--muted);font-weight:600}
+  tr:last-child td{border-bottom:none}
+  td.num,td.mono{font-family:var(--mono);font-variant-numeric:tabular-nums}
+  .pass{color:var(--good);font-weight:600}
+  .fail{color:var(--bad);font-weight:600}
+  .hit{background:var(--accent-soft)}
+
+  .grid{display:grid;gap:1rem;grid-template-columns:repeat(auto-fit,minmax(15rem,1fr));
+        margin:1.5rem 0}
+  .card{background:var(--panel);border:1px solid var(--line);border-radius:.55rem;
+        padding:1.05rem 1.15rem}
+  .card h3{margin:0 0 .3rem;font-size:.97rem}
+  .card p{margin:0;color:var(--muted);font-size:.89rem}
+  .stat{font-family:var(--mono);font-size:2rem;color:var(--accent);
+        font-weight:600;line-height:1.1}
+  .stat small{display:block;font-family:var(--sans);font-size:.78rem;
+              color:var(--muted);font-weight:400;margin-top:.3rem}
+
+  ol.flow{counter-reset:s;list-style:none;padding:0;margin:1.5rem 0}
+  ol.flow li{counter-increment:s;position:relative;padding:0 0 1.1rem 2.6rem;
+             border-left:1px solid var(--line);margin-left:.75rem}
+  ol.flow li:last-child{border-left-color:transparent;padding-bottom:0}
+  ol.flow li::before{content:counter(s);position:absolute;left:-.78rem;top:0;
+    width:1.55rem;height:1.55rem;border-radius:50%;background:var(--accent);
+    color:var(--bg);font-family:var(--mono);font-size:.8rem;font-weight:600;
+    display:grid;place-items:center}
+  ol.flow b{display:block;margin-bottom:.1rem}
+  ol.flow span{color:var(--muted);font-size:.91rem}
+
+  pre{background:var(--panel);border:1px solid var(--line);border-radius:.55rem;
+      padding:.95rem 1.1rem;overflow-x:auto;font-family:var(--mono);
+      font-size:.85rem;line-height:1.55}
+  code{font-family:var(--mono);font-size:.9em}
+  .limits li{margin-bottom:.5rem;color:var(--muted)}
+  .limits b{color:var(--ink)}
+  footer{padding:2.5rem 0 4rem;color:var(--muted);font-size:.87rem}
+</style>
+</head>
+<body>
+
+<header>
+  <div class="wrap">
+    <div class="brand">
+      <svg viewBox="0 0 64 64" aria-hidden="true">
+        <g fill="none" stroke="currentColor" stroke-linecap="round">
+          <circle cx="32" cy="32" r="29" stroke-width="1.5" opacity=".22"
+                  stroke-dasharray="128 34" transform="rotate(-24 32 32)"/>
+          <circle cx="32" cy="32" r="24" stroke-width="1.75" opacity=".34"
+                  stroke-dasharray="104 30" transform="rotate(66 32 32)"/>
+          <circle cx="32" cy="32" r="19" stroke-width="2" opacity=".52"
+                  stroke-dasharray="86 22" transform="rotate(160 32 32)"/>
+          <circle cx="32" cy="32" r="14.5" stroke-width="2.25" opacity=".72"
+                  stroke-dasharray="70 18" transform="rotate(-100 32 32)"/>
+        </g>
+        <circle cx="32" cy="32" r="9" fill="currentColor"/>
+      </svg>
+      <div>
+        <h1>Heartwood</h1>
+        <div class="sub">proof of semantic effort · MIT · v0.2</div>
+      </div>
+    </div>
+
+    <p class="lede">A publicly verifiable proof that an LLM endpoint actually
+    <strong>spent the compute you paid for</strong> — requiring zero
+    cooperation from the provider.</p>
+
+    <p class="epigraph">Hollow-LLM shows the trunk can be empty.<br>
+    Heartwood proves it is solid.</p>
+
+    <div class="cta">
+      <a class="btn primary" href="https://github.com/zcashsensei/heartwood">Source on GitHub</a>
+      <a class="btn ghost" href="https://github.com/zcashsensei/heartwood/blob/main/SPEC.md">Protocol spec</a>
+      <a class="btn ghost" href="https://github.com/zcashsensei/heartwood/blob/main/RESULTS.md">Full results</a>
+    </div>
+  </div>
+</header>
+
+<section>
+  <div class="wrap">
+    <h2><span class="n">01</span>The gap, named by the field itself</h2>
+    <p class="note">Two papers from July 2026 define it. We did not invent the
+    gap — we are first to close it.</p>
+    <div class="grid">
+      <div class="card">
+        <h3>Cryptography cannot bind effort</h3>
+        <p>Hollow-LLM (arXiv 2607.28884): <em>“proof of correct inference is not
+        proof of large-model execution.”</em> Ghost weights satisfy the ZK
+        circuit while running a tiny model.</p>
+      </div>
+      <div class="card">
+        <h3>Behavioural audits cannot transfer</h3>
+        <p>IRIS (arXiv 2607.20860), on itself: <em>“no mechanism allows
+        independent verification; the audit is auditor-centric… no cryptographic
+        commitment or public randomness is used.”</em></p>
+      </div>
+    </div>
+    <p class="note">One layer is publicly verifiable but semantically empty on
+    effort. The other is semantically real but unprovable to anyone else.
+    Heartwood bridges them.</p>
+  </div>
+</section>
+
+<section>
+  <div class="wrap">
+    <h2><span class="n">02</span>The attack that defeats every existing layer</h2>
+    <p class="note"><strong>Silent reasoning-effort downgrade.</strong> Genuine
+    model, genuine weights, genuine binary — less computation per request. Not
+    hypothetical: reasoning tokens are documented as silently dropped through
+    gateways, and GPT-5.1 defaults <code>reasoning_effort</code> to
+    <code>none</code>.</p>
+    <div class="scroll">
+      <table>
+        <thead><tr><th>Verification layer</th><th>Binds</th><th>Verdict</th></tr></thead>
+        <tbody>
+          <tr><td>TEE attestation <span class="note">(Tinfoil, Phala, Apple PCC)</span></td><td>hardware, firmware, image</td><td class="fail">PASSES</td></tr>
+          <tr><td>zkML weight commitment</td><td>architecture + committed weights</td><td class="fail">PASSES</td></tr>
+          <tr><td>AEX / zkTLS provenance</td><td>a signature chain</td><td class="fail">PASSES</td></tr>
+          <tr><td>Style fingerprinting <span class="note">(LLMmap, IRIS)</span></td><td>output distribution</td><td class="fail">blind (AUC 0.523)</td></tr>
+          <tr class="hit"><td><strong>Heartwood</strong></td><td><strong>computation actually spent</strong></td><td class="pass">CATCHES IT</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <p class="note"><strong>Style is cheap to fake. Capability is not.</strong>
+    A padded skimmer blinds a length detector, while the capability gap holds at
+    0.750 vs 0.208. That asymmetry is why a semantic test binds effort where
+    cryptography provably cannot.</p>
+  </div>
+</section>
+
+<section>
+  <div class="wrap">
+    <h2><span class="n">03</span>Measured on production frontier APIs</h2>
+    <p class="note">Claude Haiku 4.5 and Claude Opus 5 via the Anthropic
+    Messages API. Same model, same weights, same signed response — only the
+    compute differs.</p>
+
+    <div class="grid">
+      <div class="card"><div class="stat">4<small>queries to catch a full effort skim on Opus 5</small></div></div>
+      <div class="card"><div class="stat">0<small>false positives across 105 honest queries</small></div></div>
+      <div class="card"><div class="stat">10<sup>−27</sup><small>where honest evidence decayed to</small></div></div>
+    </div>
+
+    <div class="scroll">
+      <table>
+        <thead><tr><th>Model</th><th>Endpoint</th><th>Verdict</th><th>Queries</th><th>Receipt</th></tr></thead>
+        <tbody>
+          <tr><td>Haiku 4.5</td><td>honest</td><td>no deficit</td><td class="num">60</td><td class="pass">valid</td></tr>
+          <tr class="hit"><td>Haiku 4.5</td><td>effort-skimmed</td><td class="pass">EFFORT_DEFICIT</td><td class="num">4</td><td class="pass">valid</td></tr>
+          <tr class="hit"><td>Haiku 4.5</td><td>50% dilution</td><td class="pass">EFFORT_DEFICIT</td><td class="num">14</td><td class="pass">valid</td></tr>
+          <tr><td>Opus 5</td><td>honest</td><td>no deficit</td><td class="num">45</td><td class="pass">valid</td></tr>
+          <tr class="hit"><td>Opus 5</td><td>effort-skimmed</td><td class="pass">EFFORT_DEFICIT</td><td class="num">4</td><td class="pass">valid</td></tr>
+          <tr><td>Opus 5</td><td>50% dilution <span class="note">(p1=0.65)</span></td><td class="pass">EFFORT_DEFICIT</td><td class="num">33</td><td class="pass">valid</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <p class="note"><strong>The capability band belongs to the model, not the
+    protocol.</strong> Opus 5 solves an 8-step chain in <em>3 output tokens</em>
+    with no deliberation — audit it at Haiku's difficulty and every query is
+    uninformative. Calibration is the step you cannot skip.</p>
+  </div>
+</section>
+
+<section>
+  <div class="wrap">
+    <h2><span class="n">04</span>How it works — the ordering <em>is</em> the security</h2>
+    <ol class="flow">
+      <li><b>Calibrate</b><span>Find the claimed model's capability band on a disjoint pool. <code>p0</code> is a conservative lower bound, biasing the test <em>against</em> finding fault.</span></li>
+      <li><b>Commit</b><span>Publish <code>SHA-256</code> over every question <em>and</em> answer, before any query is sent.</span></li>
+      <li><b>Bind to a public beacon</b><span>A drand round that did not exist at commit time selects which items are used. Neither side controls the sample.</span></li>
+      <li><b>Bet</b><span><code>e_t = 1 + λ(p0 − x_t)</code>. Under the null this is a supermartingale, so Ville's inequality gives an <em>anytime-valid</em> guarantee — stop whenever you like without inflating false positives.</span></li>
+      <li><b>Emit a receipt</b><span>Anyone recomputes it offline: regenerate the pool, re-derive the order, re-grade every response, re-multiply the evidence.</span></li>
+    </ol>
+    <p class="note">Commit <em>before</em> the beacon exists and the auditor
+    cannot cherry-pick while the provider cannot predict which requests are
+    audits. Reorder these steps and it is no longer Heartwood.</p>
+  </div>
+</section>
+
+<section>
+  <div class="wrap">
+    <h2><span class="n">05</span>Verify a receipt yourself</h2>
+    <pre>git clone https://github.com/zcashsensei/heartwood
+cd heartwood
+python verify.py evidence/frontier/opus5_receipt_hollow.json</pre>
+    <p class="note">Seven checks, entirely offline — no contact with the
+    auditor, the provider, or the network. That is what makes the evidence
+    transferable.</p>
+    <div class="scroll">
+      <table>
+        <thead><tr><th>Check</th><th>Defeats</th></tr></thead>
+        <tbody>
+          <tr><td class="mono">pool_commitment</td><td>pool substitution</td></tr>
+          <tr><td class="mono">beacon_selection</td><td>cherry-picking, reordering, beacon swap</td></tr>
+          <tr><td class="mono">response_hashes</td><td>response tampering</td></tr>
+          <tr><td class="mono">regrading</td><td>grade flipping</td></tr>
+          <tr><td class="mono">lambda_matches_plan</td><td>post-hoc bet tuning</td></tr>
+          <tr><td class="mono">wealth_recomputed</td><td>evidence inflation</td></tr>
+          <tr><td class="mono">verdict_consistent</td><td>verdict restatement</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <p class="note"><strong>11/11</strong> forgeries caught by the adversary
+    suite · <strong>78/78</strong> tests passing · <strong>5,400</strong> ground
+    truths re-derived by an independent parser.</p>
+  </div>
+</section>
+
+<section>
+  <div class="wrap">
+    <h2><span class="n">06</span>What Heartwood does <em>not</em> prove</h2>
+    <p class="note">Published because a reviewer will find them anyway, and
+    because work that hides its boundary is worth less than work that states it.</p>
+    <ul class="limits">
+      <li><b>It does not bind responses to the provider.</b> A dishonest
+      <em>auditor</em> could fabricate a transcript; the adversary suite
+      demonstrates this rather than hiding it. Compose with AEX or zkTLS — and
+      note zkTLS today is designated-verifier.</li>
+      <li><b>A negative result is not a clean bill of health.</b> It means “no
+      degradation beyond <code>p1</code> detected in <code>n</code> queries.”</li>
+      <li><b>Sensitivity is what you declare.</b> The same 50% dilution went
+      undetected at <code>p1=0.30</code> and was caught in 33 queries at
+      <code>p1=0.65</code>. Milder tolerance costs queries and buys sensitivity.</li>
+      <li><b>Behaviourally identical substitution is undetectable.</b> We argue
+      that is the right equivalence class for an API customer, but it is a real
+      limit.</li>
+      <li><b>The statistics are not novel.</b> Betting martingales are standard.
+      The contribution is the composition and the threat model.</li>
+      <li><b>The skim was configured by us</b>, not caught in the wild. This
+      shows the audit detects the attack — not that any provider performs it.</li>
+    </ul>
+  </div>
+</section>
+
+<footer>
+  <div class="wrap">
+    <p>MIT licensed · <a href="https://github.com/zcashsensei/heartwood">github.com/zcashsensei/heartwood</a><br>
+    Built on Hollow-LLM (arXiv 2607.28884) and IRIS (arXiv 2607.20860). 62 sources in <a href="https://github.com/zcashsensei/heartwood/blob/main/SOURCES.md">SOURCES.md</a>.</p>
+  </div>
+</footer>
+
+</body>
+</html>

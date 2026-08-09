@@ -1,0 +1,4 @@
+model=claude-opus-5 think_budget=4000 honest_max=5000 hollow_max=32
+
+diff3: honest=1.00 (out_tok 176, think 0 chars)  hollow=1.00 (out_tok 3, think 0)  sep=+0.00
+diff5: honest=1.00 (out_tok 335, think 0 chars)  hollow=0.00 (out_tok 4, think 0)  sep=+1.00
