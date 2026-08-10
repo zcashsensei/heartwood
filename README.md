@@ -12,7 +12,7 @@
 
 Every **verification** path is checkable from a clean clone with a stock
 Python — **no third-party dependencies, no network access**: the test suite
-(121 tests), an
+(127 tests), an
 independent re-derivation of all 5,400 ground truths, the cross-language test
 vectors, every published receipt across all three protocol versions, the
 adversary suite, and a check that each figure quoted in the preprint matches the
@@ -114,6 +114,39 @@ have drawn one — see [below](#verifying-someone-elses-receipt).
 5. **Emit a receipt.** Anyone can recompute the pool from the seed, check the
    commitment, re-derive the beacon selection, re-grade every response, and
    re-multiply the evidence. No access to the auditor or provider needed.
+
+## Auditing an endpoint you pay for
+
+```bash
+# any Claude model
+python audit_client.py --provider anthropic --model claude-opus-5 \
+    --difficulty 5 --p1 0.4 --out receipt.json
+
+# any OpenAI-compatible service: OpenAI, Groq, Together, Mistral, DeepSeek,
+# OpenRouter, vLLM, LM Studio, or your own server
+python audit_client.py --provider openai --model gpt-5 \
+    --base-url https://api.openai.com/v1 --difficulty 5
+
+# a local model
+python audit_client.py --provider ollama --model gemma:2b --difficulty 1
+```
+
+`audit_client.py` is the real-audit path and takes **no scenario flag**:
+questions go out, answers come back, and nothing in the loop knows whether the
+endpoint is being honest. (`run_audit.py`, by contrast, is the research harness
+that plays *both* sides to demonstrate the protocol separates them — useful for
+reproducing our results, not for auditing your provider.)
+
+Two things it refuses to do, both learned from attacking our own verifier:
+
+- **No live beacon, no receipt.** If drand is unreachable it exits rather than
+  writing a receipt whose beacon the auditor chose.
+- **It records where `p0` came from.** Pass `--p0` from a trusted source and the
+  receipt says `declared`. Omit it and the client calibrates through the
+  endpoint under audit, warns you on screen, and stamps the receipt
+  `endpoint_self` — because a provider skimming during calibration drags `p0`
+  down to wherever it is already performing. See
+  [THREAT_MODEL.md](THREAT_MODEL.md).
 
 ## Verifying someone else's receipt
 
@@ -223,7 +256,7 @@ verdict restatement. One boundary is documented and demonstrated rather than
 hidden: a fully self-consistent fabricated transcript is *not* caught, because
 Heartwood binds the auditor's protocol, not the provider's speech.
 
-**Tests.** `python tests.py` → **121/121 passing**.
+**Tests.** `python tests.py` → **127/127 passing**.
 
 **Portable by construction (v0.2).** Item selection is specified exactly —
 HMAC-SHA256 counter mode + Fisher-Yates with rejection sampling — so any
@@ -244,7 +277,7 @@ in [RESULTS.md](RESULTS.md).
 
 ```bash
 ollama pull gemma:2b
-python tests.py                    # 121/121, no model needed
+python tests.py                    # 127/127, no model needed
 python verify_truth.py             # re-derive 5,400 ground truths
 python verify.py evidence/receipt_hollow.json
 python adversary.py evidence/receipt_hollow.json

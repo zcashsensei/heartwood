@@ -9,6 +9,7 @@ mis-scored correct answers -- these lock that class of bug out.
 """
 import json
 import math
+import os
 import pathlib
 import random
 import re
@@ -571,6 +572,56 @@ for label, b in (("no round", {"chain": H.DRAND_CHAIN, "round": None,
     r["beacon"] = b
     check(f"unanchorable beacon rejected offline: {label}",
           H.verify_beacon_online(r)["anchored"] is False)
+
+
+# ------------------------------------------------------- audit client ----
+section("audit-only client (the path a real customer uses)")
+
+import endpoints as EP
+
+# The defining property: a real endpoint takes a QUESTION and nothing else.
+# providers.py takes a `mode` and plays both sides, which is right for a
+# research harness and useless to a customer. If a mode parameter ever reappears
+# here, the client has stopped auditing and started simulating.
+import inspect
+
+for name, cls in EP.ENDPOINTS.items():
+    params = list(inspect.signature(cls.query).parameters)
+    check(f"{name}.query takes only a question", params == ["self", "question"],
+          str(params))
+
+try:
+    EP.get_endpoint("gemini")
+    check("unknown provider raises", False, "no exception")
+except EP.EndpointError as e:
+    check("unknown provider raises a useful error",
+          "openai" in str(e) and "base-url" in str(e), str(e)[:80])
+
+# A hosted endpoint with no key must fail LOUDLY at construction, not produce
+# an audit full of transport errors scored as wrong answers.
+_saved = os.environ.pop("ANTHROPIC_API_KEY", None)
+try:
+    import providers as _P
+    _real_read = _P.read_windows_credential
+    _P.read_windows_credential = lambda t: None      # simulate an empty store
+    try:
+        EP.get_endpoint("anthropic")
+        check("missing API key raises", False, "constructed without a key")
+    except EP.EndpointError as e:
+        check("missing API key explains all three ways to supply one",
+              "ANTHROPIC_API_KEY" in str(e) and "Credential Manager" in str(e),
+              str(e)[:80])
+    finally:
+        _P.read_windows_credential = _real_read
+finally:
+    if _saved is not None:
+        os.environ["ANTHROPIC_API_KEY"] = _saved
+
+# The audit client must never cap the endpoint's output. An auditor who imposes
+# a tight token budget has skimmed the endpoint themselves and would measure
+# their own constraint rather than the provider's effort.
+check("audit clients leave the endpoint room to deliberate",
+      EP.MAX_TOKENS >= 4000, f"MAX_TOKENS={EP.MAX_TOKENS}")
 
 
 # ------------------------------------------------------------------ CLI ----
