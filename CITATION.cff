@@ -8,8 +8,10 @@ authors:
   - given-names: George
     family-names: Tejada
 repository-code: https://github.com/zcashsensei/heartwood
+url: https://zcashsensei.github.io/heartwood/
 license: MIT
-date-released: 2026-08-08
+version: 0.3.0
+date-released: 2026-08-10
 keywords:
   - verifiable inference
   - model substitution
@@ -36,6 +38,11 @@ abstract: >-
   Measured on an endpoint where only serving effort differs, the audit
   detects a full effort skim in 31 queries and a 70 percent dilution in 71
   queries at alpha = 0.01, with no false positive on the honest endpoint.
-  Against a padded skimmer that pads responses to normal length, a
-  length-based style detector performs at chance (AUC 0.523) while the
-  capability gap remains large (0.750 versus 0.208).
+  On production frontier APIs (Claude Haiku 4.5 and Claude Opus 5 through
+  the Anthropic Messages API) the same skim is detected in 4 queries on
+  both models, and a 50 percent dilution in 14, with no false positive on
+  either honest arm -- the audit becomes cheaper, not harder, as model
+  capability rises, because a more capable model fails harder when its
+  compute is removed. Against a padded skimmer that pads responses to
+  normal length, a length-based style detector performs at chance
+  (AUC 0.523) while the capability gap remains large (0.750 versus 0.208).
