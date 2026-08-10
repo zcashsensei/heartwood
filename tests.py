@@ -14,6 +14,8 @@ import pathlib
 import random
 import re
 import sys
+import threading
+import time
 
 import challenges as C
 import endpoint as E
@@ -644,6 +646,73 @@ check("audit clients leave the endpoint room to deliberate",
       EP.MAX_TOKENS >= 4000, f"MAX_TOKENS={EP.MAX_TOKENS}")
 
 
+# ------------------------------------------------------- local UI safety ----
+section("local control panel cannot be driven by another origin")
+
+# Binding to 127.0.0.1 keeps the NETWORK out; it does not keep the BROWSER out.
+# Any page you visit while the panel is running can POST to localhost, and a
+# simple request (text/plain body) dodges CORS preflight entirely. Before the
+# fix, such a POST was accepted -- with `base_url` pointing at a host the
+# attacker controls, which would have delivered the user's API key to them.
+# Verified by exploiting it, then verified again by failing to.
+import heartwood_ui as UI
+
+_body = json.dumps({"provider": "anthropic", "model": "m",
+                    "base_url": "http://127.0.0.1:9", "difficulty": "1",
+                    "p1": "0.4", "alpha": "0.01", "p0": "0.9", "calib": "5",
+                    "maxq": "1", "pool": 50, "family": ""}).encode()
+
+
+def _ui_post(headers):
+    import urllib.error
+    import urllib.request
+    req = urllib.request.Request(f"http://127.0.0.1:{_ui_port}/run",
+                                 data=_body, headers=headers)
+    try:
+        return 200, json.loads(urllib.request.urlopen(req, timeout=10).read())
+    except urllib.error.HTTPError as e:
+        return e.code, None
+
+
+_ui_port = 8790
+_srv = UI.Server(("127.0.0.1", _ui_port), UI.Handler)
+threading.Thread(target=_srv.serve_forever, daemon=True).start()
+try:
+    import urllib.request as _u
+    time.sleep(0.4)
+    for label, hdrs in [
+            ("cross-origin POST with no token",
+             {"Content-Type": "text/plain", "Origin": "https://evil.example"}),
+            ("same-origin POST with no token", {"Content-Type": "application/json"}),
+            ("POST with a wrong token",
+             {"Content-Type": "application/json", "X-Heartwood-Token": "nope"})]:
+        code, _ = _ui_post(hdrs)
+        check(f"rejected: {label}", code == 403, f"got HTTP {code}")
+
+    _page = _u.urlopen(f"http://127.0.0.1:{_ui_port}/", timeout=10).read().decode()
+    _tok = re.search(r"const TOKEN='([^']+)'", _page).group(1)
+    check("page carries a real session token", len(_tok) > 20 and _tok != "__TOKEN__")
+    code, out = _ui_post({"Content-Type": "application/json",
+                          "X-Heartwood-Token": _tok})
+    check("the served page's own token is accepted", code == 200, f"HTTP {code}")
+
+    # Run ids were a millisecond timestamp, so receipts -- which contain every
+    # response the endpoint gave -- were enumerable by anyone reaching the port.
+    _rid = (out or {}).get("run", "")
+    check("run ids are not guessable",
+          len(_rid) >= 16 and not _rid.lstrip("r").isdigit(), repr(_rid))
+
+    # Bounds live on the server: the page is a client and a client can lie.
+    check("query budget is clamped server-side",
+          UI.clamp(10 ** 9, 1, UI.MAX_QUERIES, 60) == UI.MAX_QUERIES)
+    check("garbage budget falls back to the default",
+          UI.clamp("; rm -rf /", 1, UI.MAX_QUERIES, 60) == 60)
+    check("concurrent audits are capped", UI.MAX_CONCURRENT_RUNS <= 4)
+finally:
+    _srv.shutdown()
+    _srv.server_close()
+
+
 # ------------------------------------------------- cross-language check ----
 section("the browser verifier reproduces the Python derivation")
 
@@ -658,6 +727,8 @@ section("the browser verifier reproduces the Python derivation")
 import shutil
 import subprocess
 import tempfile
+import threading
+import time
 
 _node = shutil.which("node")
 if not _node:

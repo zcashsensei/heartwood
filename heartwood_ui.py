@@ -17,10 +17,10 @@ WHY THIS RUNS LOCALLY AND NOT ON THE WEBSITE
 
 Stdlib only, like the rest of the verification path.
 """
-import html
 import json
 import pathlib
 import queue
+import secrets
 import socketserver
 import sys
 import threading
@@ -36,7 +36,50 @@ import heartwood as H
 
 HERE = pathlib.Path(__file__).parent
 PORT = 8731
+
+# Binding to 127.0.0.1 keeps the network out. It does NOT keep out the browser:
+# any page you visit while this is running can issue requests to localhost, and
+# a simple cross-origin POST (text/plain body) is not stopped by CORS preflight.
+# Without the token below, a malicious site could start a run with `base_url`
+# pointed at a host it controls -- and this server would obligingly send your
+# API key there. That is credential exfiltration from a tool whose entire
+# promise is that the key never leaves the machine.
+#
+# Confirmed by exploiting it before fixing it: a POST bearing
+# `Origin: https://evil.example` was accepted.
+#
+# So: a secret minted per launch, embedded in the page this server serves, and
+# required on every state-changing or data-returning endpoint. A page on
+# another origin cannot read it.
+TOKEN = secrets.token_urlsafe(32)
+
+# Every run costs real money at a real provider. Bound what a single launch can
+# spend, and keep the process from accumulating transcripts forever.
+MAX_CONCURRENT_RUNS = 2
+MAX_QUERIES = 500
+MAX_CALIB = 200
+MAX_POOL = 5000
+MAX_KEPT_RUNS = 20
+
 RUNS = {}          # run_id -> {"q": Queue, "receipt": dict|None, "done": bool}
+RUNS_LOCK = threading.Lock()
+
+
+def _query_param(path, key):
+    """EventSource cannot set request headers, so its token rides in the URL."""
+    if "?" not in path:
+        return None
+    from urllib.parse import parse_qs
+    return (parse_qs(path.split("?", 1)[1]).get(key) or [None])[0]
+
+
+def clamp(value, lo, hi, default):
+    """Server-side bounds. The page sends these, so the page can lie."""
+    try:
+        v = int(float(value))
+    except (TypeError, ValueError):
+        return default
+    return max(lo, min(hi, v))
 
 
 # --------------------------------------------------------------- the run ----
@@ -167,16 +210,40 @@ class Handler(BaseHTTPRequestHandler):
         self.send_response(code)
         self.send_header("Content-Type", ctype)
         self.send_header("Content-Length", str(len(data)))
+        # Nothing here should ever be framed or sniffed into something else.
+        self.send_header("X-Content-Type-Options", "nosniff")
+        self.send_header("X-Frame-Options", "DENY")
         self.end_headers()
         self.wfile.write(data)
 
+    def _authorised(self):
+        """Reject anything a page on another origin could have sent.
+
+        Two independent gates. The token is the real one -- a cross-origin page
+        cannot read the served HTML, so it cannot learn it. The Origin check is
+        belt and braces for the case where the token leaks into a URL bar.
+        """
+        origin = self.headers.get("Origin")
+        if origin and origin not in (f"http://127.0.0.1:{PORT}",
+                                     f"http://localhost:{PORT}"):
+            return False
+        supplied = (self.headers.get("X-Heartwood-Token")
+                    or _query_param(self.path, "t") or "")
+        return secrets.compare_digest(supplied, TOKEN)
+
     def do_GET(self):
-        if self.path in ("/", "/index.html"):
-            return self._send(200, PAGE)
-        if self.path.startswith("/events/"):
-            return self.stream(self.path.rsplit("/", 1)[-1])
-        if self.path.startswith("/receipt/"):
-            run = RUNS.get(self.path.rsplit("/", 1)[-1])
+        path = self.path.split("?", 1)[0]
+        if path in ("/", "/index.html"):
+            return self._send(200, PAGE.replace("__TOKEN__", TOKEN))
+        if path.startswith("/events/"):
+            if not self._authorised():
+                return self._send(403, "forbidden", "text/plain")
+            return self.stream(path.rsplit("/", 1)[-1])
+        if path.startswith("/receipt/"):
+            if not self._authorised():
+                return self._send(403, "forbidden", "text/plain")
+            with RUNS_LOCK:
+                run = RUNS.get(path.rsplit("/", 1)[-1])
             if not run or not run.get("receipt"):
                 return self._send(404, "no receipt", "text/plain")
             return self._send(200, json.dumps(run["receipt"], indent=2),
@@ -184,19 +251,60 @@ class Handler(BaseHTTPRequestHandler):
         self._send(404, "not found", "text/plain")
 
     def do_POST(self):
-        if self.path != "/run":
+        if self.path.split("?", 1)[0] != "/run":
             return self._send(404, "not found", "text/plain")
+        if not self._authorised():
+            # The attack this stops: a page you happen to be visiting starts a
+            # run with base_url pointed at a host it owns, and your API key is
+            # delivered to it.
+            return self._send(403, json.dumps(
+                {"error": "missing or bad session token"}), "application/json")
+
         n = int(self.headers.get("Content-Length") or 0)
-        cfg = json.loads(self.rfile.read(n) or "{}")
-        run_id = f"r{int(time.time()*1000)}"
-        RUNS[run_id] = {"q": queue.Queue(), "receipt": None, "done": False}
+        if n > 64_000:
+            return self._send(413, "request too large", "text/plain")
+        try:
+            cfg = json.loads(self.rfile.read(n) or "{}")
+        except json.JSONDecodeError:
+            return self._send(400, json.dumps({"error": "bad JSON"}),
+                              "application/json")
+        if not isinstance(cfg, dict):
+            return self._send(400, json.dumps({"error": "bad request"}),
+                              "application/json")
+
+        # Bounds are enforced here, not in the page: the page is just a client
+        # and a client can send anything.
+        cfg["maxq"] = clamp(cfg.get("maxq"), 1, MAX_QUERIES, 60)
+        cfg["calib"] = clamp(cfg.get("calib"), 5, MAX_CALIB, 20)
+        cfg["pool"] = clamp(cfg.get("pool"), 10, MAX_POOL, 300)
+
+        with RUNS_LOCK:
+            live = sum(1 for r in RUNS.values() if not r["done"])
+            if live >= MAX_CONCURRENT_RUNS:
+                return self._send(429, json.dumps(
+                    {"error": f"{live} audits already running; each one costs "
+                              f"real queries. Wait for them to finish."}),
+                    "application/json")
+            # Unguessable: run ids were a millisecond timestamp, so a receipt
+            # -- which carries every response the endpoint gave -- could be
+            # enumerated by anyone who could reach the port.
+            run_id = secrets.token_urlsafe(16)
+            RUNS[run_id] = {"q": queue.Queue(), "receipt": None, "done": False,
+                            "started": time.time()}
+            if len(RUNS) > MAX_KEPT_RUNS:
+                for old, _ in sorted(((k, v["started"]) for k, v in RUNS.items()
+                                      if v["done"]),
+                                     key=lambda kv: kv[1])[:len(RUNS) - MAX_KEPT_RUNS]:
+                    RUNS.pop(old, None)
+
         threading.Thread(target=run_audit, args=(run_id, cfg),
                          daemon=True).start()
         self._send(200, json.dumps({"run": run_id}), "application/json")
 
     def stream(self, run_id):
         """Server-sent events: one JSON object per progress step."""
-        st = RUNS.get(run_id)
+        with RUNS_LOCK:
+            st = RUNS.get(run_id)
         if not st:
             return self._send(404, "unknown run", "text/plain")
         self.send_response(200)
@@ -409,6 +517,7 @@ recomputed by someone who does not trust you or this program.</small></p>
 </section>
 </main>
 <script>
+const TOKEN='__TOKEN__';
 const $=id=>document.getElementById(id);
 const tabs=[...document.querySelectorAll('.tab')];
 tabs.forEach(t=>t.onclick=()=>tabs.forEach(o=>{const on=o===t;
@@ -426,9 +535,10 @@ $('go').onclick=async()=>{
     base_url:$('base_url').value.trim(),difficulty:$('difficulty').value,
     p1:$('p1').value,alpha:$('alpha').value,p0:$('p0').value.trim(),
     calib:$('calib').value,maxq:$('maxq').value,pool:300,family:''};
-  const r=await fetch('/run',{method:'POST',body:JSON.stringify(cfg)});
+  const r=await fetch('/run',{method:'POST',headers:{'X-Heartwood-Token':TOKEN},body:JSON.stringify(cfg)});
+  if(!r.ok){line((await r.json()).error||'refused','err');$('go').disabled=false;return;}
   runId=(await r.json()).run;
-  const es=new EventSource('/events/'+runId);
+  const es=new EventSource('/events/'+runId+'?t='+encodeURIComponent(TOKEN));
   es.onmessage=e=>{
     const d=JSON.parse(e.data);
     if(d.stage==='query'){
@@ -463,7 +573,7 @@ function done(d){
     </dl></div>`;
   $('save').hidden=false;
 }
-$('save').onclick=()=>{ if(runId) location.href='/receipt/'+runId; };
+$('save').onclick=()=>{ if(runId) location.href='/receipt/'+runId+'?t='+encodeURIComponent(TOKEN); };
 </script></body></html>"""
 
 

@@ -361,7 +361,7 @@ is not surfaced. **Output tokens, not visible thinking, is the effort proxy.**
 
 ## Test suite
 
-`python tests.py` → **141/141 passing**, covering ground-truth re-derivation
+`python tests.py` → **150/150 passing**, covering ground-truth re-derivation
 (3,350 items across all five families), golden grading cases taken from real
 hand-verified payloads, the supermartingale property, empirical type-I control,
 log-space overflow, Wilson bounds, commitment binding (questions *and* answers),
