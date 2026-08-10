@@ -1,6 +1,7 @@
 """Standalone Heartwood receipt verifier.
 
-    python verify.py receipt_hollow.json
+    python verify.py evidence/receipt_hollow.json
+    python verify.py                    # verifies a bundled receipt
 
 Runs entirely offline. It needs no access to the auditor, the provider, or the
 network -- which is the whole point: the evidence is transferable.
@@ -11,11 +12,26 @@ import sys
 
 import heartwood as H
 
+HERE = pathlib.Path(__file__).parent
+# Receipts live under evidence/. The default used to be a bare filename from
+# back when they sat at the repo root, so the no-argument command -- the first
+# thing a new user types -- failed on a clean clone.
+DEFAULT = HERE / "evidence" / "receipt_hollow.json"
+
+
+def available():
+    return sorted(p.relative_to(HERE).as_posix()
+                  for p in (HERE / "evidence").rglob("*receipt*.json"))
+
 
 def main(path):
     p = pathlib.Path(path)
     if not p.exists():
-        print(f"no such receipt: {p}")
+        # A dead end here teaches nothing. List what the clone actually ships
+        # so the next command is obvious.
+        print(f"no such receipt: {p}\n\nreceipts bundled with this clone:")
+        for r in available():
+            print(f"    {r}")
         return 2
     receipt = json.loads(p.read_text())
     v = H.verify_receipt(receipt)
@@ -45,4 +61,4 @@ def main(path):
 
 
 if __name__ == "__main__":
-    sys.exit(main(sys.argv[1] if len(sys.argv) > 1 else "receipt_hollow.json"))
+    sys.exit(main(sys.argv[1] if len(sys.argv) > 1 else DEFAULT))

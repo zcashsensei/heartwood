@@ -196,5 +196,7 @@ def main(path):
 
 
 if __name__ == "__main__":
+    # Same stale default as verify.py had: receipts moved under evidence/ and
+    # the bare filename was left behind, so the no-argument form never ran.
     sys.exit(main(sys.argv[1] if len(sys.argv) > 1
-                  else HERE / "receipt_hollow.json"))
+                  else HERE / "evidence" / "receipt_hollow.json"))

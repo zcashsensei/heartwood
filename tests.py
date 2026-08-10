@@ -491,6 +491,59 @@ for relabel in ("heartwood/0.2", "heartwood/0.3"):
           not H.verify_receipt(m)["valid"])
 
 
+# ------------------------------------------------------------------ CLI ----
+section("command-line surface (the first thing a new user touches)")
+
+# Every test above this line imports the library directly, so for the whole
+# life of the repo NOTHING executed a command. That is exactly how verify.py
+# and adversary.py both kept a default receipt path from before the receipts
+# moved into evidence/: `python verify.py` with no argument failed on a clean
+# clone while all 95 library tests passed. Run the commands.
+import pathlib
+import subprocess
+
+ROOT = pathlib.Path(__file__).parent
+
+
+def run(*args, timeout=300):
+    return subprocess.run([sys.executable, *args], capture_output=True,
+                          text=True, cwd=ROOT, timeout=timeout)
+
+
+# The no-argument forms must work on a clean clone -- this is the regression.
+for script in ("verify.py", "adversary.py"):
+    r = run(script)
+    check(f"{script} with no argument succeeds",
+          r.returncode == 0, f"exit {r.returncode}: {r.stdout.strip()[-90:]}")
+
+# An explicit good path must work too, and must actually report validity
+# rather than merely exiting 0.
+r = run("verify.py", "evidence/receipt_hollow.json")
+check("verify.py on an explicit receipt exits 0", r.returncode == 0)
+check("verify.py reports the receipt valid", "RECEIPT VALID   : True" in r.stdout,
+      r.stdout.strip()[-90:])
+
+# A bad path must fail LOUDLY and tell the user what is available, because a
+# silent or bare failure is what sent this bug undetected in the first place.
+r = run("verify.py", "evidence/does_not_exist.json")
+check("verify.py on a missing receipt exits non-zero", r.returncode != 0)
+check("verify.py lists the bundled receipts when the path is wrong",
+      "receipt_hollow.json" in r.stdout, r.stdout.strip()[-90:])
+
+# Every argument-free entry point must at least run to completion.
+# NOT check_counts.py: it runs this suite as a subprocess to compute the test
+# count, so invoking it from here recurses until the timeout fires.
+for script in ("challenges.py", "portable.py"):
+    r = run(script)
+    check(f"{script} runs clean", r.returncode == 0,
+          f"exit {r.returncode}: {(r.stderr or r.stdout).strip()[-90:]}")
+
+# --help must not crash: it is what a stuck user types.
+r = run("run_audit.py", "--help")
+check("run_audit.py --help exits 0", r.returncode == 0)
+check("run_audit.py --help documents --provider", "--provider" in r.stdout)
+
+
 # ----------------------------------------------------------------- done ----
 print()
 if FAILS:

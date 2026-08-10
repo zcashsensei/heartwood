@@ -91,6 +91,19 @@ def main():
             check(f"{name}: test count {got}", got == c["tests"],
                   "" if got == c["tests"] else f"expected {c['tests']}")
 
+    # The BARE form too: "the test suite (95 tests)". This pattern was missed
+    # on the first pass, so the guard reported all-clear while the README's
+    # opening paragraph still carried a stale figure -- a checker is only worth
+    # what its weakest pattern catches. Requires a preceding word boundary so
+    # "105/105 tests" is not double-counted by both patterns.
+    total = c["tests"].split("/")[-1]
+    bare = re.compile(r"(?<![\d/])(\d[\d,]*)\**\s+tests?\b")
+    for name, text in docs.items():
+        for m in bare.finditer(text):
+            got = m.group(1).replace(",", "")
+            check(f"{name}: bare test count {m.group(1)}", got == total,
+                  "" if got == total else f"expected {total}")
+
     # Ground-truth totals quoted anywhere must be one of the two real totals.
     valid = {f"{c['verify_truth']:,}", str(c["verify_truth"]),
              f"{c['tests_truth']:,}", str(c["tests_truth"])}
