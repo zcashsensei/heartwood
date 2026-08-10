@@ -47,7 +47,9 @@ def main(path, online=False):
         print(f"{p.name} is not valid JSON: {e}")
         return 2
 
-    v = H.verify_receipt(receipt)
+    v = H.verify_any(receipt)
+    differential = (receipt.get("kind") == "differential"
+                    if isinstance(receipt, dict) else False)
 
     # A malformed receipt is reported as a receipt problem, not as a traceback.
     if not v["checks"].get("well_formed", True):
@@ -59,21 +61,36 @@ def main(path, online=False):
         return 1
 
     r = receipt["result"]
+    kind = "differential (paired)" if differential else "absolute"
     print(f"Heartwood receipt : {p.name}")
-    print(f"  version         : {receipt['version']}")
+    print(f"  version         : {receipt['version']}   kind: {kind}")
     print(f"  beacon          : {receipt['beacon'].get('source')} "
           f"round {receipt['beacon'].get('round')}")
     print(f"  pool commitment : {receipt['pool']['commitment'][:32]}...")
     print(f"  plan            : p0={receipt['plan']['p0']:.3f} "
           f"p1={receipt['plan']['p1']:.2f} alpha={receipt['plan']['alpha']} "
           f"lambda={receipt['plan']['lambda']:.4f}")
+    if differential:
+        e = receipt.get("endpoints", {})
+        print(f"  A (reference)   : {e.get('a', {}).get('model', '?')}")
+        print(f"  B (under test)  : {e.get('b', {}).get('model', '?')}")
+    else:
+        cal = receipt.get("calibration") or {}
+        if cal.get("source"):
+            print(f"  p0 source       : {cal['source']}"
+                  + ("   <-- calibrated through the audited endpoint"
+                     if cal["source"] == "endpoint_self" else ""))
     print()
     print("  checks:")
     for k, ok in v["checks"].items():
         print(f"    {'PASS' if ok else 'FAIL'}  {k}")
     print()
-    print(f"  queries         : {r['n_queries']}  "
-          f"observed rate {r['observed_rate']:.3f}")
+    if differential:
+        print(f"  queries         : {r['n_queries']}  discordant "
+              f"{r['discordant']} (A won {r['a_wins']}, B won {r['b_wins']})")
+    else:
+        print(f"  queries         : {r['n_queries']}  "
+              f"observed rate {r['observed_rate']:.3f}")
     print(f"  evidence        : {v['evidence_vs_alpha']}")
     print(f"  VERDICT         : {r['verdict']}"
           + (f" (fired at query {r['rejected_at']})" if r["rejected_at"] else ""))

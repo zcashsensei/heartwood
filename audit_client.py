@@ -74,9 +74,101 @@ def calibrate(ep, n, difficulty, seed, families):
     return H.lower_conf_bound(ok, n, conf=0.99), ok
 
 
+def differential(a, ep_a, ep_b):
+    """Paired audit: does B lose to A more often than chance?
+
+    Needs no p0. See heartwood.discordant_sequence for why the null is exactly
+    0.5 by construction, and what this cannot catch.
+    """
+    fams = a.families.split(",") if a.families else None
+    print(f"endpoint A : {a.provider} · {ep_a.model}   (the reference)")
+    print(f"endpoint B : {a.compare_to_provider} · {ep_b.model}   (under test)")
+
+    print("\n[1] committing the challenge pool")
+    pool = C.make_pool(a.seed, a.pool, a.difficulty, fams)
+    commitment = C.pool_commitment(pool)
+    print(f"    commitment = {commitment}")
+
+    print("\n[2] drawing the public beacon")
+    beacon = H.fetch_beacon()
+    if beacon.get("randomness") is None or not beacon.get("round"):
+        print(f"\nABORT: drand is unreachable ({beacon.get('source')}). "
+              f"No receipt written.")
+        return 3
+    print(f"    drand round {beacon['round']}")
+
+    order = H.selection_order(commitment, beacon, len(pool))
+    lam = H.kelly_lambda(H.DIFF_P0, a.p1)
+    thr = math.log10(1.0 / a.alpha)
+    plan = {"p0": H.DIFF_P0, "p1": a.p1, "alpha": a.alpha, "lambda": lam,
+            "pool_size": a.pool, "max_queries": a.maxq, "families": fams}
+
+    print(f"\n[3] auditing both endpoints on the same items, same order")
+    transcript, seq = [], []
+    for k, item_id in enumerate(order[:a.maxq], 1):
+        it = pool[item_id]
+        ra, ma = ask(ep_a, it["q"])
+        rb, mb = ask(ep_b, it["q"])
+        ga = E.grade(E.extract(ra), it["a"], ra)
+        gb = E.grade(E.extract(rb), it["a"], rb)
+        transcript.append({"item_id": item_id,
+                           "question_sha256": H.sha(it["q"]),
+                           "response_a": ra, "response_a_sha256": H.sha(ra),
+                           "graded_a": ga,
+                           "response_b": rb, "response_b_sha256": H.sha(rb),
+                           "graded_b": gb,
+                           "output_tokens_a": ma.get("output_tokens"),
+                           "output_tokens_b": mb.get("output_tokens")})
+        if ga != gb:
+            seq.append(1 if gb else 0)
+        lw = H.wealth_path(seq, H.DIFF_P0, lam)
+        cur = lw[-1] if lw else 0.0
+        mark = "=" if ga == gb else ("A" if ga else "B")
+        print(f"    q={k:3d}  A={ga} B={gb}  {mark} wins  "
+              f"discordant={len(seq)}  log10W={cur:+.2f}/{thr:.0f}", flush=True)
+        if cur >= thr:
+            print(f"    threshold crossed at query {k}")
+            break
+
+    eps = {"a": {"provider": a.provider, "model": ep_a.model},
+           "b": {"provider": a.compare_to_provider, "model": ep_b.model},
+           "audited_at": time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime())}
+    receipt = H.build_differential_receipt(a.seed, a.difficulty, commitment,
+                                           beacon, plan, eps, transcript,
+                                           code_hash())
+    out = pathlib.Path(a.out)
+    out.parent.mkdir(parents=True, exist_ok=True)
+    out.write_text(json.dumps(receipt, indent=2), encoding="utf-8")
+
+    r = receipt["result"]
+    print(f"\n[4] receipt")
+    print(f"    verdict    : {r['verdict']}")
+    print(f"    queries    : {r['n_queries']}  discordant {r['discordant']} "
+          f"(A won {r['a_wins']}, B won {r['b_wins']})")
+    print(f"    evidence   : 10^{r['peak_log10_wealth']:.2f} vs 10^{thr:.0f}")
+    print(f"    written    : {out}")
+    v = H.verify_differential_receipt(receipt)
+    print(f"    self-verify: {v['valid']}  "
+          f"{[k for k, x in v['checks'].items() if not x] or ''}")
+    anc = H.verify_beacon_online(receipt)
+    print(f"    beacon     : anchored={anc['anchored']}")
+    if r["discordant"] == 0:
+        print("\n    NOTE: the endpoints never disagreed. That is not evidence"
+              "\n    they are equal -- it is no evidence either way. Raise"
+              "\n    --difficulty until they start to separate.")
+    return 0 if (v["valid"] and anc["anchored"] is True) else 1
+
+
 def main(a):
     ep = EP.get_endpoint(a.provider, model=a.model, api_key=a.api_key,
                          base_url=a.base_url)
+
+    if a.compare_to_provider:
+        ep_b = EP.get_endpoint(a.compare_to_provider,
+                               model=a.compare_to_model,
+                               api_key=a.compare_to_api_key,
+                               base_url=a.compare_to_base_url)
+        return differential(a, ep, ep_b)
     fams = a.families.split(",") if a.families else None
     print(f"endpoint : {a.provider} · {ep.model}")
     print(f"pool     : {a.pool} items, difficulty {a.difficulty}, "
@@ -227,6 +319,17 @@ if __name__ == "__main__":
                          "audits never share a pool")
     ap.add_argument("--maxq", type=int, default=120)
     ap.add_argument("--out", default="receipt.json")
+
+    # Differential mode. Needs no p0: it asks only whether B loses to A more
+    # often than chance, which is the case that actually happens commercially
+    # -- a gateway or reseller serving less than the origin it bills as.
+    ap.add_argument("--compare-to-provider", default=None,
+                    choices=sorted(EP.ENDPOINTS),
+                    help="run a PAIRED audit against a second endpoint "
+                         "instead of an absolute one. No p0 required.")
+    ap.add_argument("--compare-to-model", default=None)
+    ap.add_argument("--compare-to-base-url", default=None)
+    ap.add_argument("--compare-to-api-key", default=None)
 
     args = ap.parse_args()
     if args.seed is None:

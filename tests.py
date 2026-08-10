@@ -574,6 +574,25 @@ for label, b in (("no round", {"chain": H.DRAND_CHAIN, "round": None,
           H.verify_beacon_online(r)["anchored"] is False)
 
 
+# ------------------------------------------------------------ grading ----
+section("numeric grading is representation-independent")
+
+# Found live: Opus 5 answered "Final total: $171.00" to a question whose truth
+# was "171" and was graded WRONG, losing 7/7 discordant items to Haiku on
+# formatting alone. Mis-scoring CORRECT answers is the dangerous direction --
+# it drives the observed rate down and manufactures an EFFORT_DEFICIT against
+# an honest provider, which is the one failure this tool must never have.
+for claim, truth, want in [
+        ("171.00", "171", 1), ("171.0", "171", 1), ("171", "171", 1),
+        ("$171.00", "171", 1), ("1,171.00", "1171", 1),
+        ("the answer is $32.00", "32", 1),
+        # and it must stay EXACT: only the writing is forgiven, not the value
+        ("171.4", "171", 0), ("172", "171", 0), ("17", "171", 0),
+        ("", "171", 0), ("-171", "171", 0)]:
+    got = E.grade(E.extract(claim), truth, claim)
+    check(f"grade({claim!r}, {truth!r}) == {want}", got == want, f"got {got}")
+
+
 # ------------------------------------------------------- audit client ----
 section("audit-only client (the path a real customer uses)")
 

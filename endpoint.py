@@ -8,6 +8,7 @@ The only difference is how much computation is spent per request.
   honest  -- full reasoning budget (what the customer pays for)
   hollow  -- reasoning suppressed and token budget clipped (effort skimming)
 """
+import decimal
 import json
 import re
 import urllib.request
@@ -65,6 +66,19 @@ def query(question: str, mode: str, temperature: float = 0.7, seed=None):
 
 _NUM = re.compile(r"-?\d[\d,]*(?:\.\d+)?")
 
+
+def _num_eq(a: str, b: str) -> bool:
+    """Exact numeric equality, tolerant only of how a number is written.
+
+    "171.00" == "171" == "171.0". Decimal, not float, so no binary rounding
+    surprises on money. Falls back to string equality if either side is not a
+    number, which keeps behaviour unchanged for anything non-numeric.
+    """
+    try:
+        return decimal.Decimal(a) == decimal.Decimal(b)
+    except (decimal.InvalidOperation, ValueError, TypeError):
+        return a == b
+
 # The model asserts its answer in a handful of stereotyped ways. Grading must
 # follow the ASSERTION, not merely the presence of the right token: this model
 # frequently answers "orbit" and then mentions "anchor" (the true answer) later
@@ -98,7 +112,17 @@ def grade(claim: str, truth: str, full_text: str = "") -> int:
         if not nums:  # no assertion parsed: fall back to the last number seen
             nums = [n.replace(",", "").rstrip(".")
                     for n in _NUM.findall((full_text or "").lower())]
-        return int(bool(nums) and nums[-1] == t)
+        # Compare as NUMBERS, not as strings. A model that writes money in
+        # full -- "Final total: $171.00" -- is exactly right, and string
+        # equality marked it wrong. That is the most dangerous direction for
+        # this bug to point: mis-scoring correct answers drives the observed
+        # rate down and manufactures an EFFORT_DEFICIT against an honest
+        # provider. Found when Opus 5 scored 0/7 against Haiku on items it had
+        # in fact answered correctly, purely on decimal formatting.
+        #
+        # Deliberately NOT a loosening: equality is still exact, just numeric,
+        # so 171.4 does not pass for 171. Only the representation is forgiven.
+        return int(bool(nums) and _num_eq(nums[-1], t))
     # Word answer: the asserted span must name the truth word.
     if re.search(rf"\b{re.escape(t)}\b", c):
         return 1

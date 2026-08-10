@@ -357,6 +357,142 @@ def verify_receipt(receipt: dict) -> dict:
             "evidence_vs_alpha": f"10^{peak:.1f} vs 10^{thr:.0f} needed"}
 
 
+# ------------------------------------------------------- differential ----
+#
+# The absolute test needs p0: the rate an honest endpoint achieves. Where p0
+# comes from decides what the receipt is worth, and calibrating through the
+# endpoint under audit is circular -- a provider skimming during calibration
+# drags p0 down to wherever it is already performing.
+#
+# A paired audit needs no p0 at all. Run the SAME committed pool, in the SAME
+# beacon order, against two endpoints that both claim the same model -- a
+# direct API and a gateway, say -- and ask only whether B loses to A more often
+# than chance. Discard the items they agree on; they carry no information about
+# which is better. Among the items where exactly one succeeded, the null is
+# "B is no worse than A", under which A-wins and B-wins are equally likely.
+#
+# That makes p0 exactly 0.5 by construction rather than by measurement, and the
+# same betting machinery applies unchanged. It is McNemar's test in
+# anytime-valid form.
+#
+# What it does NOT do: catch two endpoints skimming equally. Nothing black-box
+# can. It catches the case that actually happens commercially -- a reseller or
+# gateway quietly serving less than the origin it bills as.
+
+DIFF_P0 = 0.5
+
+
+def discordant_sequence(transcript: list) -> list:
+    """Items where exactly one endpoint succeeded, as 1 = B won, 0 = A won."""
+    out = []
+    for t in transcript:
+        a, b = t["graded_a"], t["graded_b"]
+        if a != b:
+            out.append(1 if b else 0)
+    return out
+
+
+def build_differential_receipt(pool_seed, difficulty, pool_commitment, beacon,
+                               plan, endpoints, transcript, code_hash):
+    seq = discordant_sequence(transcript)
+    path = wealth_path(seq, DIFF_P0, plan["lambda"])
+    peak = max(path) if path else 0.0
+    threshold = math.log10(1.0 / plan["alpha"])
+    fired = next((i + 1 for i, w in enumerate(path) if w >= threshold), None)
+    return {
+        "version": VERSION,
+        "kind": "differential",
+        "pool": {"seed": pool_seed, "difficulty": difficulty,
+                 "commitment": pool_commitment, "size": plan["pool_size"],
+                 "families": plan.get("families")},
+        "beacon": beacon,
+        "plan": plan,
+        "endpoints": endpoints,
+        "code_hash": code_hash,
+        "transcript": transcript,
+        "result": {
+            "n_queries": len(transcript),
+            "discordant": len(seq),
+            "a_wins": sum(1 for x in seq if x == 0),
+            "b_wins": sum(1 for x in seq if x == 1),
+            "peak_log10_wealth": peak,
+            "log10_threshold": threshold,
+            "rejected_at": fired,
+            "verdict": "B_UNDERPERFORMS_A" if fired
+                       else "NO_EVIDENCE_OF_DIFFERENCE",
+        },
+    }
+
+
+def verify_differential_receipt(receipt: dict) -> dict:
+    """Independent verification of a paired audit. Offline, like the other."""
+    checks = {"well_formed": True}
+    for key in ("pool", "beacon", "plan", "transcript", "result", "endpoints"):
+        if key not in receipt:
+            return {"valid": False, "checks": {"well_formed": False},
+                    "problems": [f"missing required key: {key}"],
+                    "verdict": None, "beacon_anchored": None,
+                    "peak_log10_wealth": 0.0,
+                    "evidence_vs_alpha": "n/a (malformed receipt)"}
+
+    ver = receipt.get("version", VERSION)
+    pool = C.make_pool(receipt["pool"]["seed"], receipt["pool"]["size"],
+                       receipt["pool"]["difficulty"],
+                       receipt["pool"].get("families"),
+                       portable_mode=(ver not in LEGACY_POOL))
+    checks["pool_commitment"] = (
+        C.pool_commitment(pool) == receipt["pool"]["commitment"])
+
+    order = selection_order(receipt["pool"]["commitment"], receipt["beacon"],
+                            len(pool), ver)
+    used = [t["item_id"] for t in receipt["transcript"]]
+    checks["beacon_selection"] = (order[:len(used)] == used)
+
+    import endpoint as E
+    by_id = {it["id"]: it for it in pool}
+    hash_ok = regrade_ok = True
+    for t in receipt["transcript"]:
+        it = by_id.get(t["item_id"])
+        if it is None:
+            regrade_ok = False
+            break
+        for side in ("a", "b"):
+            resp = t[f"response_{side}"]
+            if sha(resp) != t[f"response_{side}_sha256"]:
+                hash_ok = False
+            if E.grade(E.extract(resp), it["a"], resp) != t[f"graded_{side}"]:
+                regrade_ok = False
+    checks["response_hashes"] = hash_ok
+    checks["regrading"] = regrade_ok
+
+    # The bet must be the Kelly bet against a null of 0.5 -- not a number the
+    # auditor picked after seeing which way the pairs fell.
+    lam = kelly_lambda(DIFF_P0, receipt["plan"]["p1"])
+    checks["lambda_matches_plan"] = abs(lam - receipt["plan"]["lambda"]) < 1e-9
+
+    seq = discordant_sequence(receipt["transcript"])
+    path = wealth_path(seq, DIFF_P0, receipt["plan"]["lambda"])
+    peak = max(path) if path else 0.0
+    checks["wealth_recomputed"] = (
+        abs(peak - receipt["result"]["peak_log10_wealth"]) < 1e-6)
+    thr = math.log10(1.0 / receipt["plan"]["alpha"])
+    fired = next((i + 1 for i, w in enumerate(path) if w >= thr), None)
+    checks["verdict_consistent"] = (fired == receipt["result"]["rejected_at"])
+
+    return {"valid": all(checks.values()), "checks": checks, "problems": [],
+            "verdict": receipt["result"]["verdict"],
+            "beacon_anchored": None,
+            "peak_log10_wealth": peak,
+            "evidence_vs_alpha": f"10^{peak:.1f} vs 10^{thr:.0f} needed"}
+
+
+def verify_any(receipt: dict) -> dict:
+    """Verify either kind. Receipts declare their kind; absent means absolute."""
+    if isinstance(receipt, dict) and receipt.get("kind") == "differential":
+        return verify_differential_receipt(receipt)
+    return verify_receipt(receipt)
+
+
 def verify_beacon_online(receipt: dict, timeout: int = 15) -> dict:
     """Confirm the receipt's beacon is a REAL drand output, not a chosen value.
 

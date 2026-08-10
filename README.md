@@ -12,7 +12,7 @@
 
 Every **verification** path is checkable from a clean clone with a stock
 Python — **no third-party dependencies, no network access**: the test suite
-(127 tests), an
+(138 tests), an
 independent re-derivation of all 5,400 ground truths, the cross-language test
 vectors, every published receipt across all three protocol versions, the
 adversary suite, and a check that each figure quoted in the preprint matches the
@@ -256,7 +256,7 @@ verdict restatement. One boundary is documented and demonstrated rather than
 hidden: a fully self-consistent fabricated transcript is *not* caught, because
 Heartwood binds the auditor's protocol, not the provider's speech.
 
-**Tests.** `python tests.py` → **127/127 passing**.
+**Tests.** `python tests.py` → **138/138 passing**.
 
 **Portable by construction (v0.2).** Item selection is specified exactly —
 HMAC-SHA256 counter mode + Fisher-Yates with rejection sampling — so any
@@ -277,7 +277,7 @@ in [RESULTS.md](RESULTS.md).
 
 ```bash
 ollama pull gemma:2b
-python tests.py                    # 127/127, no model needed
+python tests.py                    # 138/138, no model needed
 python verify_truth.py             # re-derive 5,400 ground truths
 python verify.py evidence/receipt_hollow.json
 python adversary.py evidence/receipt_hollow.json
@@ -293,9 +293,26 @@ python run_audit.py --difficulty 0 --calib 36 --maxq 220 \
 This is a **reference implementation and a validated statistical core**, not a
 finished product. The statistical machinery (betting martingales, e-values) is
 standard and not claimed as novel; the contribution is the composition and the
-threat model. Empirical validation used a small local model under memory
-constraints — the effect sizes are real and measured, but the scale is a
-laptop, not a frontier API.
+threat model.
+
+**What is done.** The protocol, the receipt format, an audit client you can
+point at a provider you pay for, and validation on production frontier APIs —
+Haiku 4.5 and Opus 5, not a laptop. All twelve published receipts anchor to
+real drand rounds.
+
+**What is not.** The load-bearing open problem is `p0`. It is the honest
+success rate everything is measured against, and if it is calibrated through
+the endpoint under audit, a provider that skims during calibration drags it
+down to wherever it is already performing and the audit can never fire. The
+client records which source was used, so a receipt never hides this — but
+recording a weakness is not fixing it. **A uniformly skimming provider cannot
+be caught without an anchor from outside that endpoint**, and that is
+information-theoretic, not an implementation gap. `--p0` (declared) and
+`--compare-to` (differential against a second endpoint) are the two anchors
+that exist today; a shared reference profile per model is the obvious third
+and is not built.
+
+Also missing: any interface other than a command line.
 
 ## Licence
 
