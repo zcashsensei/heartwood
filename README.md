@@ -117,6 +117,20 @@ have drawn one — see [below](#verifying-someone-elses-receipt).
 
 ## Auditing an endpoint you pay for
 
+The one-command way, if you would rather click than type:
+
+```bash
+python heartwood_ui.py        # opens a local control panel on 127.0.0.1
+```
+
+It runs on your machine, not ours. An audit needs your API key, and a hosted
+page that collected it would be asking you to hand your credentials to a third
+party in order to check whether a provider is trustworthy. The key is read from
+your environment or credential store, sent only to the provider being audited,
+and never written to the receipt, the log, or the page.
+
+Or from the command line:
+
 ```bash
 # any Claude model
 python audit_client.py --provider anthropic --model claude-opus-5 \
