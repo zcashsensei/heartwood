@@ -53,7 +53,7 @@ Two passes:
    came from in `../evidence/`, and compared.
 
 The second pass is the one that matters. A paper is a claim about what was
-measured, so no figure in it is trusted: 22 claims are checked against
+measured, so no figure in it is trusted: 27 claims are checked against
 artefacts, and the script exits non-zero if any disagrees. Re-run it after any
 edit to the results sections.
 

@@ -172,4 +172,4 @@ receipt it came from, and checks the LaTeX structure:
 python paper/check_paper.py
 ```
 
-22 factual claims, all currently matching. Re-run after any edit.
+27 factual claims, all currently matching. Re-run after any edit.

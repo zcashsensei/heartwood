@@ -144,6 +144,19 @@ def main():
               "" if found and all(v == c["version"] for v in found)
               else f"code says {c['version']}")
 
+    # The number of verified paper claims, wherever a doc states it. The count
+    # was computed here from the start but never compared against the docs, so
+    # paper/README.md and paper/SUBMISSION.md both sat at "22" while the real
+    # figure was 27 -- the fourth blind spot found in this guard, and the same
+    # shape as the others: a number was gathered and then not actually checked.
+    claims_pat = re.compile(r"(\d+)\s+(?:factual\s+)?claims?\b")
+    for name, text in docs.items():
+        for m in claims_pat.finditer(text):
+            got = m.group(1)
+            check(f"{name}: paper-claim count {got}", got == c["paper_claims"],
+                  "" if got == c["paper_claims"]
+                  else f"expected {c['paper_claims']}")
+
     check("all receipts verify", c["receipts"].split("/")[0] == c["receipts"].split("/")[1],
           c["receipts"])
     check("paper figures match receipts", c["paper_claims"] != "UNKNOWN",

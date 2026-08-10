@@ -253,6 +253,15 @@ sample from both parties simultaneously: the auditor cannot select a favourable
 subset because $R$ did not exist at commit time, and the provider cannot predict
 which requests are audits.
 
+\noindent This guarantee is conditional on $R$ being a genuine chain output, and
+that condition is not self-enforcing. Offline verification recomputes the
+selection order from the beacon value \emph{carried in the receipt}, so an
+auditor who invents $R$ satisfies the check by construction and regains control
+of the sample; grinding candidate values until the induced order is favourable
+is a form of peeking, and voids the anytime-valid guarantee of
+Section~\ref{sec:evidence}. We quantify this in Section~\ref{sec:beacon-anchor}
+and specify the anchoring step that closes it.
+
 \subsection{Challenge construction}
 
 Items are drawn from families with machine-checkable ground truth (sequential
@@ -282,6 +291,7 @@ generation on CPython's Mersenne Twister, which silently made receipts
 verifiable only under CPython.
 
 \section{Statistical Guarantee}
+\label{sec:evidence}
 
 \subsection{Null hypothesis}
 
@@ -350,13 +360,15 @@ Section~\ref{sec:negative} rather than merely assert.
 
 \section{Verification}
 
-A verifier performs seven checks, all offline:
+A verifier performs eight checks, all offline:
 
 \begin{enumerate}\itemsep2pt
+\item confirm the receipt is well formed and within resource bounds;
 \item regenerate the pool from the seed and confirm the commitment;
-\item re-derive the beacon-bound order and confirm it matches the transcript
-prefix (this single check defeats cherry-picking, reordering, and beacon
-substitution simultaneously);
+\item re-derive the order from the beacon value \emph{carried in the receipt}
+and confirm it matches the transcript prefix (this defeats cherry-picking,
+reordering, and any beacon substitution that does not also recompute the order
+--- but see Section~\ref{sec:beacon-anchor});
 \item confirm each response hash;
 \item re-grade every response;
 \item recompute $\lambda$ from the declared $(p_0,p_1)$;
@@ -367,6 +379,67 @@ substitution simultaneously);
 \noindent The verifier contacts neither the auditor nor the provider and
 requires no network access. In our reference implementation the entire
 verification path uses only the language's standard library.
+
+Check~1 exists because a receipt is hostile input by construction: it is a file
+one party hands another. An early version of our verifier raised uncaught
+exceptions on thirteen classes of malformed receipt and spent 57 seconds on one
+that merely \emph{declared} a five-million-item pool --- a denial of service
+against the party doing the checking.
+
+\subsection{What offline verification cannot establish}
+\label{sec:beacon-anchor}
+
+Check~3 re-derives the selection order from the beacon the receipt supplies.
+The eight checks therefore establish that a receipt is \emph{internally
+consistent}; they do not establish that its beacon was ever drawn. An auditor
+free to choose $R$ satisfies check~3 by construction and recovers exactly the
+control over the sample that the commit-then-beacon ordering was introduced to
+remove. Because such an auditor may grind candidate values, this is peeking, and
+the guarantee of Section~\ref{sec:evidence} does not apply.
+
+We measured the cost of the attack. Against a 300-item pool and an endpoint
+whose true success rate ($0.75$) lies \emph{above} $p_0$ ($0.70$) --- so that no
+deficit exists to find --- an uncontrolled beacon accumulates $10^{-57.4}$ of
+evidence and correctly returns no deficit. Searching candidate beacon values
+found one firing at query~6 after 1{,}017 tries, approximately 0.4~seconds of
+computation on one core. The resulting receipt passes all eight offline checks.
+The declared $\alpha$ was $0.01$; against a grinding auditor the attained
+false-positive rate approaches~1.
+
+The mitigation is to fetch the named round from the chain and confirm the
+randomness matches. This requires network access, which is why we state it as a
+separate step rather than folding it into offline verification: a verifier
+without connectivity must report the beacon as unchecked rather than treat
+internal consistency as sufficient. All twelve receipts we publish anchor to
+genuine drand rounds. Carrying drand's BLS signature inside the receipt would
+permit offline anchoring against the chain public key; we have not implemented
+this, and note it as the natural next revision.
+
+We report this because it is the kind of gap a protocol paper is expected to
+find in review rather than after deployment, and because the reproduction is
+short: it is committed alongside the implementation.
+
+\subsection{Paired audits}
+
+The absolute test requires $p_0$, and where $p_0$ comes from determines what a
+receipt is worth. Calibrating through the endpoint under audit is circular: a
+provider that skims during calibration depresses $p_0$ to its own current
+performance, after which the test cannot fire.
+
+A paired audit avoids $p_0$ entirely. Two endpoints that claim the same model
+are queried on the same committed pool in the same beacon-derived order. Items
+on which they agree are discarded; among the remainder, the null ``$B$ is no
+worse than $A$'' renders an $A$-win and a $B$-win equally likely, so $p_0 = 1/2$
+by construction rather than by measurement, and the machinery of
+Section~\ref{sec:evidence} applies unchanged. This is McNemar's test in
+anytime-valid form.
+
+In simulation at $\alpha = 0.01$ the attained false-positive rate for identical
+endpoints is $0.010$; the test is inert when $B$ is superior, fires on 86.7\% of
+runs when $B$ is mildly inferior ($0.80$ versus $0.65$), and on all runs when
+$B$ is skimmed. It cannot detect two endpoints skimming equally --- no black-box
+test can --- but it addresses the deployment most likely to skim in practice: an
+intermediary reselling access to an origin it bills as the claimed model.
 
 \section{Evaluation}
 
@@ -536,6 +609,20 @@ but this is a real limit rather than a strength.
 \item \textbf{Calibration is required per claimed model} and consumes queries
 against the honest endpoint. A miscalibrated tier yields a valid receipt
 containing no information.
+
+\item \textbf{Offline verification does not anchor the beacon}, and an auditor
+who chooses it manufactures a false verdict in roughly a thousand attempts
+(Section~\ref{sec:beacon-anchor}). Anchoring requires network access; offline
+anchoring requires carrying the chain signature in the receipt and is not yet
+implemented.
+
+\item \textbf{$p_0$ must be anchored outside the audited endpoint.} An endpoint
+that skims uniformly, including during calibration, depresses $p_0$ to its own
+performance and cannot be caught by an absolute test. This is
+information-theoretic rather than an implementation gap: catching it requires a
+reference the provider cannot bias. A paired audit removes the dependence on
+$p_0$ but substitutes a dependence on a second endpoint believed to serve the
+claimed model honestly.
 
 \item \textbf{Indistinguishability is argued, not proven.} Our challenges are
 ordinary word problems, a common category of API traffic, but a provider

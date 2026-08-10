@@ -10,10 +10,13 @@ figure in it is checked against the receipt it came from rather than trusted.
 import json
 import pathlib
 import re
+import sys
 from collections import Counter
 
 HERE = pathlib.Path(__file__).parent
 ROOT = HERE.parent
+# This script runs from paper/, so the repo root is not importable by default.
+sys.path.insert(0, str(ROOT))
 tex = (HERE / "heartwood.tex").read_text(encoding="utf-8")
 body = "\n".join(l for l in tex.splitlines() if not l.lstrip().startswith("%"))
 
@@ -97,6 +100,41 @@ claim("unlucky honest run rate",
 # Honest-query total quoted in the abstract (60 Haiku + 45 Opus 5)
 claim("total frontier honest queries",
       h_hon["result"]["n_queries"] + o_hon["result"]["n_queries"], 105)
+
+# --- Section: what offline verification cannot establish --------------------
+# The paper now states that an auditor who chooses the beacon manufactures a
+# false verdict, and quotes numbers for it. Those numbers must come from the
+# artefact, not from the prose -- a paper that describes an attack it cannot
+# reproduce is worse than one that never mentions it.
+import heartwood as _H
+
+attack = ROOT / "attacks" / "attack_ground_beacon.json"
+if attack.exists():
+    g = json.loads(attack.read_text(encoding="utf-8"))
+    claim("ground receipt passes offline verification",
+          _H.verify_receipt(g)["valid"], True)
+    claim("ground receipt asserts a deficit",
+          g["result"]["verdict"], "EFFORT_DEFICIT")
+    claim("ground receipt fires at query 6", g["result"]["rejected_at"], 6)
+    claim("ground receipt's endpoint was NOT deficient (p0 below true rate)",
+          g["plan"]["p0"] < 0.75, True)
+else:
+    claim("attacks/attack_ground_beacon.json present "
+          "(run security_test.py)", False, True)
+
+# Every published receipt must anchor to a real drand round -- the claim the
+# mitigation paragraph rests on. Skipped without network rather than assumed.
+try:
+    anchored = [_H.verify_beacon_online(json.loads(p.read_text(encoding="utf-8")))
+                for p in sorted((ROOT / "evidence").glob("receipt_*.json"))
+                + sorted((ROOT / "evidence").glob("*/*receipt*.json"))]
+    if any(a["anchored"] is None for a in anchored):
+        print("  skip  beacon anchoring (drand unreachable)")
+    else:
+        claim("published receipts anchored to real drand rounds",
+              sum(a["anchored"] is True for a in anchored), len(anchored))
+except Exception as e:                                       # pragma: no cover
+    print(f"  skip  beacon anchoring ({type(e).__name__})")
 
 print()
 if fails:

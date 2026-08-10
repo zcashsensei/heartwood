@@ -1,4 +1,4 @@
-# Heartwood Protocol Specification v0.1
+# Heartwood Protocol Specification — `heartwood/0.3`
 
 A Heartwood receipt is a self-contained claim about the computational effort an
 LLM endpoint spent, verifiable offline by any third party. This document is
@@ -208,27 +208,86 @@ queries spent. Receipts MUST NOT be presented as certificates of good behaviour.
 
 ## 8. Verification
 
+### 8.1 Offline checks (normative)
+
 A verifier MUST perform all of:
 
 | # | Check | Defeats |
 |---|---|---|
+| 0 | receipt is structurally well-formed and within bounds | malformed input, resource exhaustion |
 | 1 | regenerate pool from seed; `pool_commitment == commitment` | pool substitution |
-| 2 | recompute beacon order; matches transcript prefix | cherry-picking, reordering, beacon swap |
+| 2 | recompute beacon order **from the beacon the receipt carries**; matches transcript prefix | cherry-picking, reordering, *inconsistent* beacon swap |
 | 3 | `SHA256(response) == response_sha256` for every entry | response tampering |
 | 4 | re-grade every response; matches `graded` | grade flipping |
 | 5 | `λ == kelly(p0, p1)` | post-hoc bet tuning |
 | 6 | recompute wealth path; matches `peak_log10_wealth` | evidence inflation |
 | 7 | recompute first crossing; matches `rejected_at`/`verdict` | verdict restatement |
 
-A receipt is valid iff all seven pass. Verification MUST require no network
-access and no contact with auditor or provider.
+Check 0 exists because a receipt is hostile input by construction — one party
+hands it to another. A verifier MUST bound the work a receipt can demand
+(`pool.size`, transcript length) and MUST return an invalid result rather than
+raising or hanging on malformed input.
 
-## 9. Security considerations
+Passing checks 0–7 establishes that a receipt is **internally consistent**. It
+does NOT establish that the beacon was ever drawn. See 8.2.
 
-**In scope.** A dishonest auditor cannot cherry-pick items, reorder them, choose
-the beacon, inflate `p0`, re-tune `λ`, restate the verdict, or substitute the
-pool. A dishonest provider cannot launder grades. All eleven such forgeries are
+### 8.2 Beacon anchoring (normative, network required)
+
+Check 2 recomputes the selection order from the beacon value *inside the
+receipt*. An auditor who invents that value therefore satisfies check 2 by
+construction, and controls the sample — which is the precise thing the
+commit-then-beacon ordering exists to prevent. Grinding candidate beacon values
+until the ordering favours a verdict **is** peeking, and it voids the
+anytime-valid guarantee of §6.
+
+This is measured, not hypothesised. Against a 300-item pool and an endpoint
+whose true success rate (0.75) is *above* `p0` (0.70), so no deficit exists:
+
+| beacon | evidence reached | verdict |
+|---|---|---|
+| uncontrolled | 10^−57.4 | no deficit, correctly |
+| ground, after 1,017 tries (0.4 s) | fires at query 6 | `EFFORT_DEFICIT`, falsely |
+
+Therefore: a verifier that has network access MUST fetch `beacon.round` from
+the named chain and confirm `beacon.randomness` matches. A verifier that
+cannot MUST report the beacon as *unchecked*, and MUST NOT present a receipt as
+trustworthy on the strength of checks 0–7 alone.
+
+A future revision SHOULD carry the drand BLS signature in the receipt so
+anchoring can be verified offline against the chain public key. This is not yet
+specified.
+
+## 9. Differential receipts
+
+A receipt MAY set `kind: "differential"`. Such a receipt records a **paired**
+audit of two endpoints on the same committed pool in the same beacon order, and
+requires no `p0`.
+
+Items where both endpoints agree carry no information about which is better and
+are discarded. Among the remainder, the null hypothesis "B is no worse than A"
+makes an A-win and a B-win equally likely, so `p0 = 0.5` **by construction
+rather than by measurement**. Evidence accumulates by §6 unchanged over the
+discordant sequence, encoded as 1 = B succeeded, 0 = A succeeded. This is
+McNemar's test in anytime-valid form.
+
+Transcript entries carry `response_a`, `response_a_sha256`, `graded_a` and the
+`_b` equivalents; `plan.p0` MUST be `0.5`; `result` carries `discordant`,
+`a_wins`, `b_wins`. Verification applies §8 to both sides of every entry.
+
+This construction cannot detect two endpoints skimming equally — no black-box
+test can. It detects an endpoint underperforming a reference that claims the
+same model.
+
+## 10. Security considerations
+
+**In scope.** A dishonest auditor cannot cherry-pick items, reorder them,
+inflate `p0`, re-tune `λ`, restate the verdict, or substitute the pool. A
+dishonest provider cannot launder grades. All eleven such forgeries are
 exercised in `adversary.py`.
+
+**Explicitly NOT in scope for offline verification: beacon choice.** See §8.2.
+An auditor who invents a beacon defeats the sampling guarantee, and only §8.2
+anchoring closes it. `security_test.py` reproduces the attack.
 
 **Out of scope — the fabrication boundary.** Heartwood binds the **auditor's
 protocol**, not the **provider's speech**. An auditor who fabricates a fully
@@ -262,9 +321,9 @@ profiling one customer's traffic could notice a shift.
 the test is weak against degradation milder than `p1`. Detecting small dilution
 fractions requires a higher `p1` and substantially more queries.
 
-## 10. Versioning
+## 11. Versioning
 
 `version` is `heartwood/MAJOR.MINOR`. A verifier MUST refuse a `MAJOR` it does
 not implement. Changes to the commitment construction, the selection derivation,
-the e-value definition, or the seven checks are breaking and require a `MAJOR`
-bump.
+the e-value definition, or the checks in §8.1 are breaking and require a
+`MAJOR` bump.
