@@ -3,7 +3,16 @@
 Uses the empirically observed rates from gemma:2b -- honest 0.83, hollow 0.08
 -- rather than assumed ones, so the power curve describes the real cliff.
 """
-import numpy as np
+try:
+    import numpy as np
+except ImportError:                                          # pragma: no cover
+    raise SystemExit(
+        "power_curve.py needs numpy:  pip install numpy\n"
+        "It is the ONLY file here that does. Every verification path -- "
+        "tests.py, verify.py,\nverify_truth.py, adversary.py, "
+        "security_test.py, paper/check_paper.py -- is stdlib only,\n"
+        "because a stranger checking a receipt must not have to install "
+        "anything.")
 
 import heartwood as H
 

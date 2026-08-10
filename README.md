@@ -10,8 +10,9 @@
 [![spec: heartwood/0.3](https://img.shields.io/badge/spec-heartwood%2F0.3-9a4a1e.svg)](SPEC.md)
 [![site](https://img.shields.io/badge/site-zcashsensei.github.io%2Fheartwood-informational.svg)](https://zcashsensei.github.io/heartwood/)
 
-Everything here is checkable from a clean clone with a stock Python — **no
-third-party dependencies, no network access**: the test suite (105 tests), an
+Every **verification** path is checkable from a clean clone with a stock
+Python — **no third-party dependencies, no network access**: the test suite
+(121 tests), an
 independent re-derivation of all 5,400 ground truths, the cross-language test
 vectors, every published receipt across all three protocol versions, the
 adversary suite, and a check that each figure quoted in the preprint matches the
@@ -83,6 +84,10 @@ Commit **before** the beacon exists, and neither side controls the sample: the
 auditor cannot pick a favourable subset, and the provider cannot predict which
 requests are audits. Reorder these steps and it is no longer Heartwood.
 
+That guarantee holds only while step 3 is a *real* beacon. A verifier that
+never checks the receipt's beacon against the chain is trusting the auditor to
+have drawn one — see [below](#verifying-someone-elses-receipt).
+
 ## How it works
 
 1. **Calibrate** the claimed model on a disjoint pool to find its *capability
@@ -116,8 +121,26 @@ requests are audits. Reorder these steps and it is no longer Heartwood.
 python -c "import json,heartwood; print(heartwood.verify_receipt(json.load(open('evidence/receipt_hollow.json'))))"
 ```
 
-This re-derives all six checks offline: pool commitment, beacon selection,
-response hashes, regrading, the declared bet, and the verdict.
+This re-derives every check offline: well-formedness, pool commitment, beacon
+selection, response hashes, regrading, the declared bet, the recomputed wealth,
+and the verdict.
+
+**What offline verification cannot tell you.** Item selection is derived from
+the beacon *the receipt itself carries*, so these checks establish that a
+receipt is self-consistent — not that its beacon was ever drawn. An auditor
+free to invent that value can grind candidates until the ordering favours the
+verdict they want; we measured **1,017 tries, 0.4 seconds** to manufacture a
+false `EFFORT_DEFICIT` against an endpoint that had no deficit. Add `--online`
+to anchor the beacon against the drand chain:
+
+```bash
+python verify.py evidence/receipt_hollow.json --online
+```
+
+All twelve published receipts anchor to real drand rounds. The full finding,
+its mitigation, and what the mitigation still does not cover are in
+[THREAT_MODEL.md](THREAT_MODEL.md#what-heartwood-does-not-prove); reproduce it
+with `python security_test.py`.
 
 ## Results
 
@@ -185,13 +208,22 @@ fluent normal-length justification:
 **Style is cheap to fake. Capability is not.** That asymmetry is why a
 capability test binds effort where cryptography cannot.
 
+**Security review.** `security_test.py` attacks the *verifier* rather than the
+protocol logic, on the premise that a receipt is hostile input by design — one
+stranger hands it to another. It found and fixed **13 ways to crash or hang the
+verifier** (raw `KeyError`, `ZeroDivisionError` on `alpha=0`, and a 57-second
+stall on a receipt merely *declaring* a five-million-item pool), and it found
+the beacon-grinding gap described above, which is documented rather than
+patched away because offline verification cannot close it. Both are now
+regression-tested.
+
 **Security.** `adversary.py` catches **11/11** in-scope forgeries offline —
 cherry-picking, reordering, beacon swaps, `p0` inflation, post-hoc bet tuning,
 verdict restatement. One boundary is documented and demonstrated rather than
 hidden: a fully self-consistent fabricated transcript is *not* caught, because
 Heartwood binds the auditor's protocol, not the provider's speech.
 
-**Tests.** `python tests.py` → **105/105 passing**.
+**Tests.** `python tests.py` → **121/121 passing**.
 
 **Portable by construction (v0.2).** Item selection is specified exactly —
 HMAC-SHA256 counter mode + Fisher-Yates with rejection sampling — so any
@@ -212,11 +244,11 @@ in [RESULTS.md](RESULTS.md).
 
 ```bash
 ollama pull gemma:2b
-python tests.py                    # 105/105, no model needed
+python tests.py                    # 121/121, no model needed
 python verify_truth.py             # re-derive 5,400 ground truths
 python verify.py evidence/receipt_hollow.json
 python adversary.py evidence/receipt_hollow.json
-python power_curve.py              # Monte Carlo envelope
+python power_curve.py              # Monte Carlo envelope (needs numpy)
 
 # live audit against a local endpoint (slow on CPU)
 python run_audit.py --difficulty 0 --calib 36 --maxq 220 \

@@ -7,7 +7,9 @@ The grading tests use GOLDEN CASES taken from real gemma:2b payloads that were
 hand-verified during development. They exist because the first grader silently
 mis-scored correct answers -- these lock that class of bug out.
 """
+import json
 import math
+import pathlib
 import random
 import re
 import sys
@@ -250,7 +252,14 @@ rec = H.build_receipt(20260808, 0, c1, beacon, plan, {"n": 36}, transcript,
                       "testhash")
 v = H.verify_receipt(rec)
 check("valid receipt verifies", v["valid"], str(v["checks"]))
-check("all seven checks present", len(v["checks"]) == 7, str(list(v["checks"])))
+# Eight since the security review: `well_formed` was added so a malformed
+# receipt is reported as invalid rather than crashing the verifier. Named
+# explicitly rather than counted, so adding a check is a deliberate edit here.
+EXPECTED_CHECKS = ["well_formed", "pool_commitment", "beacon_selection",
+                   "response_hashes", "regrading", "lambda_matches_plan",
+                   "wealth_recomputed", "verdict_consistent"]
+check("every verifier check is present", list(v["checks"]) == EXPECTED_CHECKS,
+      str(list(v["checks"])))
 check("deficit detected on a hollow transcript",
       rec["result"]["verdict"] == "EFFORT_DEFICIT",
       rec["result"]["verdict"])
@@ -489,6 +498,79 @@ for relabel in ("heartwood/0.2", "heartwood/0.3"):
     m["version"] = relabel
     check(f"relabelling v0.1 as {relabel} is caught",
           not H.verify_receipt(m)["valid"])
+
+
+# -------------------------------------------------------------- security ----
+section("hostile receipt handling (verify.py reads files from strangers)")
+
+# Found by security_test.py: verify_receipt raised raw KeyError,
+# ZeroDivisionError, TypeError and friends on 13 kinds of malformed input, and
+# spent 57 seconds on a receipt merely DECLARING a five-million-item pool. A
+# verifier that dies on a hostile file is a denial of service against the
+# person doing the checking.
+import copy as _copy
+
+_good = json.loads((pathlib.Path(__file__).parent / "evidence"
+                    / "receipt_hollow.json").read_text(encoding="utf-8"))
+
+
+def _mangled(fn):
+    r = _copy.deepcopy(_good)
+    fn(r)
+    return r
+
+
+_hostile = [
+    ("missing result", lambda r: r.pop("result")),
+    ("missing plan", lambda r: r.pop("plan")),
+    ("transcript not a list", lambda r: r.__setitem__("transcript", "x")),
+    ("alpha = 0", lambda r: r["plan"].__setitem__("alpha", 0)),
+    ("p0 = 1.0", lambda r: r["plan"].__setitem__("p0", 1.0)),
+    ("p0 = 0.0", lambda r: r["plan"].__setitem__("p0", 0.0)),
+    ("pool.size = 5e6", lambda r: r["pool"].__setitem__("size", 5_000_000)),
+    ("pool.seed a string", lambda r: r["pool"].__setitem__("seed", "abc")),
+    ("difficulty 9999", lambda r: r["pool"].__setitem__("difficulty", 9999)),
+    ("unknown family", lambda r: r["pool"].__setitem__("families", ["../etc"])),
+    ("response not a string",
+     lambda r: r["transcript"][0].__setitem__("response", {})),
+]
+for label, fn in _hostile:
+    try:
+        res = H.verify_receipt(_mangled(fn))
+        check(f"hostile receipt returns invalid: {label}",
+              res["valid"] is False and res["checks"].get("well_formed") is False,
+              str(res.get("checks")))
+    except Exception as e:                                   # noqa: BLE001
+        check(f"hostile receipt returns invalid: {label}", False,
+              f"raised {type(e).__name__}: {e}")
+
+# A well-formed receipt must still pass -- validation must not reject honest
+# input, which is the failure mode that makes people disable a checker.
+check("validation accepts a genuine receipt",
+      H.validate_receipt(_good) == [], str(H.validate_receipt(_good)))
+
+section("beacon anchoring (offline verification cannot establish it)")
+
+# The measured finding: an auditor free to CHOOSE the beacon grinds candidates
+# until the item order fires. 1,017 tries manufactured a false EFFORT_DEFICIT
+# against an endpoint above p0. Offline verification cannot see this, so the
+# API must never imply it did.
+_v = H.verify_receipt(_good)
+check("verify_receipt reports beacon_anchored as unknown, never True",
+      _v.get("beacon_anchored") is None, str(_v.get("beacon_anchored")))
+
+# A beacon the receipt cannot even name must be rejected without a network
+# round-trip -- never returned as 'unknown', which reads as benign.
+for label, b in (("no round", {"chain": H.DRAND_CHAIN, "round": None,
+                               "randomness": "ab"}),
+                 ("round 0", {"chain": H.DRAND_CHAIN, "round": 0,
+                              "randomness": "ab"}),
+                 ("foreign chain", {"chain": "attacker-chain", "round": 7,
+                                    "randomness": "ab"})):
+    r = _copy.deepcopy(_good)
+    r["beacon"] = b
+    check(f"unanchorable beacon rejected offline: {label}",
+          H.verify_beacon_online(r)["anchored"] is False)
 
 
 # ------------------------------------------------------------------ CLI ----

@@ -110,7 +110,7 @@ not buy the adversary much. Their options are:
 
 The residual attack is selective full-effort on *audit-shaped* traffic
 specifically, which is why challenge indistinguishability still matters — see
-limitation 6.
+limitation 7.
 
 ## What Heartwood does NOT prove
 
@@ -121,27 +121,59 @@ Stated plainly, because a grant reviewer will find these anyway:
    AEX proves "the provider really said this"; Heartwood proves "what was said
    required the compute." Note zkTLS today is designated-verifier — convincing
    a third party still means trusting the notary.
-2. **It cannot detect a substitution that is behaviourally equivalent.** If the
+2. **Offline verification cannot establish that the beacon was ever drawn.**
+   This is the sharpest limit in the list and it was found by attacking our own
+   verifier, so the numbers are measured rather than estimated.
+
+   `verify_receipt()` derives the item order from the beacon *the receipt
+   itself carries*. That establishes self-consistency, not that the value came
+   from drand. An auditor free to invent the beacon therefore chooses the
+   sample — which is precisely what the commit→beacon ordering exists to
+   prevent, and it voids the anytime-valid guarantee, because grinding
+   candidate beacons **is** peeking.
+
+   Measured against a 300-item pool and an endpoint whose true success rate
+   (0.75) sits *above* `p0` (0.70), so there is no deficit to find:
+
+   | beacon | evidence reached | verdict |
+   |---|---|---|
+   | uncontrolled | 10^−57.4 | no deficit, correctly |
+   | ground, after **1,017 tries (0.4 s)** | fires at query **6** | `EFFORT_DEFICIT`, falsely |
+
+   The ground receipt passes all seven offline checks. Declared α was 0.01;
+   under a grinding auditor the true false-positive rate approaches 1.
+
+   **Mitigation, and its limits.** `verify_beacon_online()` fetches the named
+   round and compares — it rejects the ground receipt and confirms all twelve
+   published ones. `verify.py --online` runs it. But this needs the network,
+   so a purely offline verifier can only ever report *self-consistency*: the
+   CLI now says so in as many words instead of printing a bare `VALID: True`.
+   Closing it offline requires carrying drand's BLS signature in the receipt
+   and verifying it against the chain public key. That is the right fix and it
+   is not yet implemented.
+
+   A reproduction is committed: `python security_test.py`.
+3. **It cannot detect a substitution that is behaviourally equivalent.** If the
    cheaper service answers everything the claimed model answers, no black-box
    test can separate them. We argue this is the correct equivalence class for an
    API customer, but it is a real limit, not a strength to be hidden.
-3. **Low dilution fractions need many queries.** Detection of a fraction ε of
+4. **Low dilution fractions need many queries.** Detection of a fraction ε of
    downgraded traffic falls into the ε⁻² regime once ε is small; ε=0.1 was not
    detectable within our budget.
-4. **The pool must be calibrated per claimed model.** Items the claimed model
+5. **The pool must be calibrated per claimed model.** Items the claimed model
    cannot solve carry no evidence, because they fail under honest and hollowed
    serving alike.
-5. **The statistical machinery is not novel.** Betting martingales and e-values
+6. **The statistical machinery is not novel.** Betting martingales and e-values
    are standard (Ramdas et al.), and anytime-valid testing has been applied to
    API auditing before. The contribution is the *composition* and the *threat
    model*, not the test.
-6. **Indistinguishability is argued, not proven.** Our challenges are ordinary
+7. **Indistinguishability is argued, not proven.** Our challenges are ordinary
    arithmetic word problems — a real and common category of API traffic — but a
    provider profiling one customer's traffic distribution could still notice a
    shift. The principled fix is to generate capability-cliff items *in the
    customer's own domain and register*, so audit traffic is drawn from the same
    distribution as real traffic. That is future work, not a solved problem.
-7. **Power is tied to the declared tolerance.** The Kelly bet is optimal against
+8. **Power is tied to the declared tolerance.** The Kelly bet is optimal against
    `p1`, so the test is strong against degradation to roughly `p1` or worse and
    weak against milder degradation. Detecting a small dilution fraction requires
    declaring a higher `p1` and paying substantially more queries.

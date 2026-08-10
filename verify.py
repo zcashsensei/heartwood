@@ -2,9 +2,17 @@
 
     python verify.py evidence/receipt_hollow.json
     python verify.py                    # verifies a bundled receipt
+    python verify.py <file> --online    # also anchor the beacon to drand
 
-Runs entirely offline. It needs no access to the auditor, the provider, or the
-network -- which is the whole point: the evidence is transferable.
+Runs entirely offline by default. It needs no access to the auditor, the
+provider, or the network -- which is the whole point: the evidence is
+transferable.
+
+What "offline" cannot establish: item selection is derived from the beacon the
+receipt itself carries, so the offline checks prove the receipt is
+SELF-CONSISTENT, not that the beacon was ever drawn. An auditor free to invent
+that value can grind candidates until the ordering favours the verdict they
+want. --online fetches the named drand round and confirms it.
 """
 import json
 import pathlib
@@ -24,7 +32,7 @@ def available():
                   for p in (HERE / "evidence").rglob("*receipt*.json"))
 
 
-def main(path):
+def main(path, online=False):
     p = pathlib.Path(path)
     if not p.exists():
         # A dead end here teaches nothing. List what the clone actually ships
@@ -33,10 +41,24 @@ def main(path):
         for r in available():
             print(f"    {r}")
         return 2
-    receipt = json.loads(p.read_text())
-    v = H.verify_receipt(receipt)
-    r = receipt["result"]
+    try:
+        receipt = json.loads(p.read_text(encoding="utf-8"))
+    except (json.JSONDecodeError, UnicodeDecodeError) as e:
+        print(f"{p.name} is not valid JSON: {e}")
+        return 2
 
+    v = H.verify_receipt(receipt)
+
+    # A malformed receipt is reported as a receipt problem, not as a traceback.
+    if not v["checks"].get("well_formed", True):
+        print(f"Heartwood receipt : {p.name}")
+        print("\n  MALFORMED -- not verifiable:")
+        for prob in v["problems"]:
+            print(f"    - {prob}")
+        print("\n  RECEIPT VALID   : False")
+        return 1
+
+    r = receipt["result"]
     print(f"Heartwood receipt : {p.name}")
     print(f"  version         : {receipt['version']}")
     print(f"  beacon          : {receipt['beacon'].get('source')} "
@@ -56,9 +78,37 @@ def main(path):
     print(f"  VERDICT         : {r['verdict']}"
           + (f" (fired at query {r['rejected_at']})" if r["rejected_at"] else ""))
     print()
-    print(f"  RECEIPT VALID   : {v['valid']}")
-    return 0 if v["valid"] else 1
+
+    # The checks above establish INTERNAL consistency only. Selection is
+    # derived from the beacon the receipt itself supplies, so an auditor who
+    # invents that value chooses the sample -- measured at 1,017 tries to
+    # manufacture a false EFFORT_DEFICIT. Never print a bare "VALID: True"
+    # without saying whether the beacon was anchored to the real chain.
+    anchored = None
+    if online:
+        a = H.verify_beacon_online(receipt)
+        anchored = a["anchored"]
+        state = {True: "ANCHORED", False: "NOT ANCHORED",
+                 None: "UNKNOWN"}[anchored]
+        print(f"  BEACON          : {state} -- {a['reason']}")
+    else:
+        print("  BEACON          : NOT CHECKED (offline). The checks above "
+              "prove self-consistency,")
+        print("                    not that this beacon was ever drawn. "
+              "Re-run with --online")
+        print("                    to confirm it against the drand chain.")
+    print()
+
+    full = v["valid"] and anchored is True
+    print(f"  RECEIPT VALID   : {v['valid']}"
+          + ("" if online else "  (internally consistent; beacon unverified)"))
+    if online and v["valid"] and anchored is not True:
+        print("  TRUSTWORTHY     : NO -- consistent, but the beacon is not "
+              "the chain's.")
+    return 0 if (full or (v["valid"] and not online)) else 1
 
 
 if __name__ == "__main__":
-    sys.exit(main(sys.argv[1] if len(sys.argv) > 1 else DEFAULT))
+    args = [a for a in sys.argv[1:] if a != "--online"]
+    online = "--online" in sys.argv[1:]
+    sys.exit(main(args[0] if args else DEFAULT, online=online))

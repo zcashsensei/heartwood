@@ -190,13 +190,117 @@ def build_receipt(pool_seed, difficulty, pool_commitment, beacon, plan,
     }
 
 
+# A receipt is a file one stranger hands another -- it is hostile input by
+# design, and the verifier is the program that reads it. Bound the work a
+# receipt can ask for. Real pools are 120-300 items; 50,000 is far past any
+# honest use and still checks in well under a second.
+MAX_POOL = 50_000
+MAX_TRANSCRIPT = 100_000
+
+
+def validate_receipt(receipt) -> list:
+    """Structural validation. Returns a list of problems; empty means sane.
+
+    Without this, verify_receipt raised raw KeyError/ZeroDivisionError/
+    TypeError on malformed input -- 13 distinct crashes, plus a 57-second hang
+    on a receipt merely declaring a five-million-item pool. A verifier that
+    dies on a hostile file is a denial of service against the person doing the
+    checking, and an uncaught traceback tells them nothing about what is wrong.
+    """
+    P = []
+    if not isinstance(receipt, dict):
+        return ["receipt is not a JSON object"]
+
+    for key, typ in (("pool", dict), ("beacon", dict), ("plan", dict),
+                     ("transcript", list), ("result", dict)):
+        if key not in receipt:
+            P.append(f"missing required key: {key}")
+        elif not isinstance(receipt[key], typ):
+            P.append(f"{key} must be a {typ.__name__}")
+    if not isinstance(receipt.get("version", VERSION), str):
+        P.append("version must be a string")
+    if P:
+        return P
+
+    pool, plan, tr = receipt["pool"], receipt["plan"], receipt["transcript"]
+
+    seed = pool.get("seed")
+    if not isinstance(seed, int) or isinstance(seed, bool):
+        P.append("pool.seed must be an integer")
+    size = pool.get("size")
+    if not isinstance(size, int) or isinstance(size, bool):
+        P.append("pool.size must be an integer")
+    elif not 1 <= size <= MAX_POOL:
+        P.append(f"pool.size {size} outside 1..{MAX_POOL}")
+    diff = pool.get("difficulty")
+    if not isinstance(diff, int) or isinstance(diff, bool):
+        P.append("pool.difficulty must be an integer")
+    elif diff not in C.DIFF:
+        P.append(f"pool.difficulty {diff} is not a defined tier "
+                 f"{sorted(C.DIFF)}")
+    fams = pool.get("families")
+    if fams is not None:
+        if not isinstance(fams, list) or not all(isinstance(f, str) for f in fams):
+            P.append("pool.families must be null or a list of strings")
+        else:
+            known = {g.__name__ for g in C.GENERATORS}
+            unknown = [f for f in fams if f not in known]
+            if unknown:
+                P.append(f"pool.families names unknown families: {unknown}")
+    if not isinstance(pool.get("commitment"), str):
+        P.append("pool.commitment must be a string")
+
+    # p0 and p1 sit strictly inside (0,1): kelly_lambda divides by p0(1-p0),
+    # and alpha feeds log10(1/alpha).
+    for k, lo, hi in (("p0", 0.0, 1.0), ("p1", 0.0, 1.0), ("alpha", 0.0, 1.0)):
+        v = plan.get(k)
+        if not isinstance(v, (int, float)) or isinstance(v, bool):
+            P.append(f"plan.{k} must be a number")
+        elif not (lo < float(v) < hi) or float(v) != float(v):
+            P.append(f"plan.{k}={v} must lie strictly between {lo} and {hi}")
+    if not isinstance(plan.get("lambda"), (int, float)) or isinstance(plan.get("lambda"), bool):
+        P.append("plan.lambda must be a number")
+
+    if len(tr) > MAX_TRANSCRIPT:
+        P.append(f"transcript of {len(tr)} exceeds {MAX_TRANSCRIPT}")
+    for i, t in enumerate(tr[:MAX_TRANSCRIPT]):
+        if not isinstance(t, dict):
+            P.append(f"transcript[{i}] is not an object")
+            break
+        if not isinstance(t.get("item_id"), int) or isinstance(t.get("item_id"), bool):
+            P.append(f"transcript[{i}].item_id must be an integer")
+            break
+        if not isinstance(t.get("response"), str):
+            P.append(f"transcript[{i}].response must be a string")
+            break
+        if t.get("graded") not in (0, 1):
+            P.append(f"transcript[{i}].graded must be 0 or 1")
+            break
+    return P
+
+
 def verify_receipt(receipt: dict) -> dict:
     """Independent verification. Recomputes every claim from scratch.
 
     This runs with no access to the auditor, the provider, or the network --
     which is precisely what makes the evidence transferable.
+
+    NOTE on the beacon: this function checks that the receipt is INTERNALLY
+    consistent, including that item selection follows from the beacon the
+    receipt names. It does NOT confirm that beacon is a real drand output --
+    see verify_beacon_online(). An auditor free to invent a beacon value can
+    grind candidates until one orders the items favourably, which voids the
+    alpha guarantee. Anchoring is reported separately and is never implied by
+    a True here.
     """
-    checks, ok = {}, True
+    problems = validate_receipt(receipt)
+    if problems:
+        return {"valid": False, "checks": {"well_formed": False},
+                "problems": problems, "verdict": None,
+                "beacon_anchored": None, "peak_log10_wealth": 0.0,
+                "evidence_vs_alpha": "n/a (malformed receipt)"}
+
+    checks, ok = {"well_formed": True}, True
 
     # 1. The pool really is the committed pool (questions AND answers).
     ver = receipt.get("version", VERSION)
@@ -246,7 +350,51 @@ def verify_receipt(receipt: dict) -> dict:
     checks["verdict_consistent"] = (fired == receipt["result"]["rejected_at"])
 
     ok = all(checks.values())
-    return {"valid": ok, "checks": checks,
+    return {"valid": ok, "checks": checks, "problems": [],
             "verdict": receipt["result"]["verdict"],
+            "beacon_anchored": None,   # unknown offline -- see verify_beacon_online
             "peak_log10_wealth": peak,
             "evidence_vs_alpha": f"10^{peak:.1f} vs 10^{thr:.0f} needed"}
+
+
+def verify_beacon_online(receipt: dict, timeout: int = 15) -> dict:
+    """Confirm the receipt's beacon is a REAL drand output, not a chosen value.
+
+    verify_receipt() is deliberately offline, and that is a feature -- but it
+    means it can only establish that a receipt is self-consistent. Item
+    selection is derived from the beacon the receipt itself supplies, so an
+    auditor who invents that value controls the sample.
+
+    Measured, not hypothesised: grinding candidate beacon values against a
+    300-item pool found one that fires at query 6 in 1,017 tries (about half a
+    second) -- against an endpoint whose true success rate was ABOVE p0, where
+    an uncontrolled beacon produced 10^-57 of evidence. The declared alpha was
+    0.01; under a grinding auditor the real false-positive rate approaches 1.
+
+    This is the check that closes it: fetch the named round from drand and
+    confirm the randomness matches. It needs the network, which is why it is a
+    separate call rather than folded into verify_receipt.
+
+    Returns {"anchored": True|False|None, "reason": str}. None means the
+    question could not be answered (offline, unreachable) -- which must never
+    be read as a pass.
+    """
+    b = (receipt or {}).get("beacon") or {}
+    rnd, claimed = b.get("round"), b.get("randomness")
+    if not isinstance(rnd, int) or rnd <= 0 or not isinstance(claimed, str):
+        return {"anchored": False,
+                "reason": f"receipt names no usable drand round ({rnd!r})"}
+    if b.get("chain") != DRAND_CHAIN:
+        return {"anchored": False,
+                "reason": f"unknown chain {b.get('chain')!r}"}
+    try:
+        with urllib.request.urlopen(DRAND_URL.format(round=rnd), timeout=timeout) as r:
+            live = json.loads(r.read())
+    except Exception as e:
+        return {"anchored": None,
+                "reason": f"could not reach drand ({type(e).__name__})"}
+    if str(live.get("randomness", "")).lower() != claimed.lower():
+        return {"anchored": False,
+                "reason": (f"round {rnd} randomness does not match the receipt "
+                           f"-- the beacon was chosen, not drawn")}
+    return {"anchored": True, "reason": f"matches drand round {rnd}"}
