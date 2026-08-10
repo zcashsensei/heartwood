@@ -233,6 +233,17 @@
     <p class="note">Commit <em>before</em> the beacon exists and the auditor
     cannot cherry-pick while the provider cannot predict which requests are
     audits. Reorder these steps and it is no longer Heartwood.</p>
+    <p class="note"><strong>And the limit of that, found by attacking our own
+    verifier.</strong> Step 5 derives the item order from the beacon the receipt
+    <em>itself carries</em> — so an offline check proves a receipt is
+    self-consistent, not that its beacon was ever drawn. An auditor free to
+    invent that value can grind candidates until the ordering favours the
+    verdict they want: <strong>1,017 tries, 0.4 seconds</strong> to manufacture
+    a false <code>EFFORT_DEFICIT</code> against an endpoint with no deficit at
+    all. <code>verify.py --online</code> anchors the beacon to the drand chain
+    and rejects it — and all twelve published receipts anchor to real rounds.
+    Reproduce with <code>python security_test.py</code>; the full write-up is
+    limitation 2 in the threat model.</p>
   </div>
 </section>
 
@@ -260,8 +271,9 @@ python verify.py evidence/frontier/opus5_receipt_hollow.json</pre>
       </table>
     </div>
     <p class="note"><strong>11/11</strong> forgeries caught by the adversary
-    suite · <strong>95/95</strong> tests passing · <strong>5,400</strong> ground
-    truths re-derived by an independent parser.</p>
+    suite · <strong>121/121</strong> tests passing · <strong>5,400</strong>
+    ground truths re-derived by an independent parser · <strong>12/12</strong>
+    published receipts anchored to real drand rounds.</p>
   </div>
 </section>
 

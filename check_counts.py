@@ -78,7 +78,18 @@ def main():
     # Key by path relative to the repo, not by bare filename: paper/README.md
     # and ./README.md share a name and one silently overwrote the other, so the
     # root README was never actually checked.
-    docs = {str(p.relative_to(ROOT)).replace("\\", "/"): p.read_text(encoding="utf-8")
+    def load(p):
+        t = p.read_text(encoding="utf-8")
+        # Strip tags in HTML before matching. The site writes
+        # "<strong>95/95</strong> tests passing", and every pattern below looks
+        # for a number ADJACENT to its noun -- so the markup sat between them
+        # and the guard read the page as clean while it carried a stale figure
+        # for two releases. Markdown emphasis was handled; HTML was not.
+        if p.suffix == ".html":
+            t = re.sub(r"<[^>]+>", " ", t)
+        return t
+
+    docs = {str(p.relative_to(ROOT)).replace("\\", "/"): load(p)
             for p in list(ROOT.glob("*.md")) + [ROOT / "docs/index.html"]
             + list((ROOT / "paper").glob("*.md"))}
 
