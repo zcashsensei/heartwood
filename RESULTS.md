@@ -361,11 +361,16 @@ is not surfaced. **Output tokens, not visible thinking, is the effort proxy.**
 
 ## Test suite
 
-`python tests.py` → **60/60 passing**, covering ground truth re-derivation
-(3,600 items across four families), golden grading cases taken from real
+`python tests.py` → **95/95 passing**, covering ground-truth re-derivation
+(3,350 items across all five families), golden grading cases taken from real
 hand-verified payloads, the supermartingale property, empirical type-I control,
 log-space overflow, Wilson bounds, commitment binding (questions *and* answers),
-beacon determinism and sensitivity, receipt round-trip, and the adversary suite.
+beacon determinism and sensitivity, the portable shuffle's unbiasedness,
+version-scoped verification, receipt round-trip, and the adversary suite.
+
+`python verify_truth.py` independently re-derives a further **5,400** items
+across three families by parsing the rendered question text, using no code
+shared with the generator — so a bug in the generator cannot hide itself.
 
 ## Bugs found and fixed during development
 
@@ -377,7 +382,7 @@ Recorded because they shaped the design:
 2. **Ground-truth bug.** `money_chain` used integer division, so $4×3 at 10% off
    yielded truth=11 when the correct answer is $10.80 — penalising a *correct*
    model on 2 of 6 calibration items. Fixed by requiring the discount to divide
-   the total exactly; verified by re-deriving 3,600 truths with an independent
+   the total exactly; verified by re-deriving 5,400 truths with an independent
    parser.
 3. **Float64 overflow.** Wealth grows exponentially and overflowed within a few
    hundred items. Moved to log-space accumulation.

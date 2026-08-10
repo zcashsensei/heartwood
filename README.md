@@ -212,8 +212,8 @@ in [RESULTS.md](RESULTS.md).
 
 ```bash
 ollama pull gemma:2b
-python tests.py                    # 60/60, no model needed
-python verify_truth.py             # re-derive 3,600 ground truths
+python tests.py                    # 95/95, no model needed
+python verify_truth.py             # re-derive 5,400 ground truths
 python verify.py evidence/receipt_hollow.json
 python adversary.py evidence/receipt_hollow.json
 python power_curve.py              # Monte Carlo envelope
