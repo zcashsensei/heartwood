@@ -12,7 +12,7 @@
 
 Every **verification** path is checkable from a clean clone with a stock
 Python — **no third-party dependencies, no network access**: the test suite
-(138 tests), an
+(141 tests), an
 independent re-derivation of all 5,400 ground truths, the cross-language test
 vectors, every published receipt across all three protocol versions, the
 adversary suite, and a check that each figure quoted in the preprint matches the
@@ -256,7 +256,7 @@ verdict restatement. One boundary is documented and demonstrated rather than
 hidden: a fully self-consistent fabricated transcript is *not* caught, because
 Heartwood binds the auditor's protocol, not the provider's speech.
 
-**Tests.** `python tests.py` → **138/138 passing**.
+**Tests.** `python tests.py` → **141/141 passing**.
 
 **Portable by construction (v0.2).** Item selection is specified exactly —
 HMAC-SHA256 counter mode + Fisher-Yates with rejection sampling — so any
@@ -277,7 +277,7 @@ in [RESULTS.md](RESULTS.md).
 
 ```bash
 ollama pull gemma:2b
-python tests.py                    # 138/138, no model needed
+python tests.py                    # 141/141, no model needed
 python verify_truth.py             # re-derive 5,400 ground truths
 python verify.py evidence/receipt_hollow.json
 python adversary.py evidence/receipt_hollow.json

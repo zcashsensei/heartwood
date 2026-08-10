@@ -21,6 +21,7 @@ import heartwood as H
 
 FAILS = []
 COUNT = [0]
+ROOT = pathlib.Path(__file__).parent
 
 
 def check(name, cond, detail=""):
@@ -641,6 +642,59 @@ finally:
 # their own constraint rather than the provider's effort.
 check("audit clients leave the endpoint room to deliberate",
       EP.MAX_TOKENS >= 4000, f"MAX_TOKENS={EP.MAX_TOKENS}")
+
+
+# ------------------------------------------------- cross-language check ----
+section("the browser verifier reproduces the Python derivation")
+
+# v0.2 SPECIFIED a portable derivation; v0.3 finished the job. Neither claim
+# meant anything until a second implementation in another language reproduced
+# the order byte for byte. docs/verify.html is that implementation, and this
+# test runs the derivation OUT OF THE SHIPPED PAGE rather than a copy, so the
+# page and the spec cannot drift apart silently.
+#
+# A browser verifier that disagreed with the Python one would report failures
+# on honest receipts -- the accuse-the-innocent direction again.
+import shutil
+import subprocess
+import tempfile
+
+_node = shutil.which("node")
+if not _node:
+    print("  skip  node not installed; cross-language check not run")
+else:
+    _html = (ROOT / "docs" / "verify.html").read_text(encoding="utf-8")
+    _m = re.search(r'<script>\n"use strict";(.*?)</script>', _html, re.S)
+    check("docs/verify.html contains an extractable derivation", _m is not None)
+    if _m:
+        _js = _m.group(1)
+        _core = _js[_js.index("const enc = new TextEncoder"):
+                    _js.index("/* ------------------------------------"
+                              "--------------------- statistics -- */")]
+        _r = json.loads((ROOT / "evidence" / "v0.3"
+                         / "haiku_receipt_hollow.json").read_text(encoding="utf-8"))
+        _n = _r["pool"]["size"]
+        _want = H.selection_order(_r["pool"]["commitment"], _r["beacon"], _n)
+        with tempfile.TemporaryDirectory() as _d:
+            _p = pathlib.Path(_d)
+            (_p / "e.json").write_text(json.dumps(
+                {"commitment": _r["pool"]["commitment"],
+                 "randomness": _r["beacon"]["randomness"],
+                 "n": _n, "order": _want[:40]}), encoding="utf-8")
+            (_p / "d.mjs").write_text(_core + """
+import fs from 'node:fs';
+const e = JSON.parse(fs.readFileSync(process.argv[2], 'utf8'));
+const order = await selectionOrder(e.commitment, e.randomness, e.n);
+process.stdout.write(JSON.stringify(order.slice(0, e.order.length)));
+""", encoding="utf-8")
+            _res = subprocess.run([_node, str(_p / "d.mjs"), str(_p / "e.json")],
+                                  capture_output=True, text=True, timeout=300)
+            check("browser derivation runs", _res.returncode == 0,
+                  _res.stderr.strip()[-120:])
+            if _res.returncode == 0:
+                check("browser selection order == Python, byte for byte",
+                      json.loads(_res.stdout) == _want[:40],
+                      "the two implementations disagree")
 
 
 # ------------------------------------------------------------------ CLI ----

@@ -1,0 +1,494 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Heartwood — verify a receipt in your browser</title>
+<meta name="description" content="Drop a Heartwood receipt and re-check it here. Nothing is uploaded: verification runs entirely in your browser.">
+<link rel="icon" href="logo.svg" type="image/svg+xml">
+<style>
+  :root{
+    --bg:#fbf9f6; --panel:#fff; --ink:#1a1714; --muted:#6b625a;
+    --line:#e3ddd4; --accent:#9a4a1e; --accent-soft:#f3e6dd;
+    --good:#2f6b46; --good-soft:#e4f0e9; --bad:#9a2a2a; --bad-soft:#f6e4e4;
+    --warn:#8a5a06; --warn-soft:#f7ecd6;
+    --mono:ui-monospace,SFMono-Regular,"SF Mono",Menlo,Consolas,monospace;
+    --sans:ui-sans-serif,system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;
+  }
+  @media (prefers-color-scheme:dark){
+    :root:not([data-theme="light"]){
+      --bg:#14120f; --panel:#1c1916; --ink:#efe9e1; --muted:#a49a8e;
+      --line:#2e2924; --accent:#e0895a; --accent-soft:#2b201a;
+      --good:#6fbf8f; --good-soft:#16261d; --bad:#e0736f; --bad-soft:#2b1917;
+      --warn:#d9a441; --warn-soft:#2a2214;
+    }
+  }
+  :root[data-theme="dark"]{
+    --bg:#14120f; --panel:#1c1916; --ink:#efe9e1; --muted:#a49a8e;
+    --line:#2e2924; --accent:#e0895a; --accent-soft:#2b201a;
+    --good:#6fbf8f; --good-soft:#16261d; --bad:#e0736f; --bad-soft:#2b1917;
+    --warn:#d9a441; --warn-soft:#2a2214;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--sans);
+       line-height:1.6;-webkit-font-smoothing:antialiased}
+  .wrap{max-width:58rem;margin:0 auto;padding:0 1.5rem}
+  a{color:var(--accent);text-underline-offset:.18em}
+
+  header{padding:2.75rem 0 1.5rem;border-bottom:1px solid var(--line)}
+  .brand{display:flex;align-items:center;gap:.85rem}
+  .brand svg{width:40px;height:40px;color:var(--accent);flex:none}
+  h1{font-size:1.6rem;margin:0;letter-spacing:-.02em;font-weight:650}
+  .sub{color:var(--muted);font-size:.85rem;font-family:var(--mono);margin-top:.1rem}
+  .lede{margin:1.1rem 0 0;max-width:44rem;color:var(--muted)}
+  .lede b{color:var(--ink)}
+
+  .tabs{display:flex;gap:.4rem;margin:1.4rem 0 0;border-bottom:1px solid var(--line)}
+  .tab{padding:.55rem 1rem;border:1px solid transparent;border-bottom:none;
+       border-radius:.4rem .4rem 0 0;background:none;color:var(--muted);
+       font:inherit;font-size:.92rem;cursor:pointer;margin-bottom:-1px}
+  .tab[aria-selected="true"]{background:var(--panel);border-color:var(--line);
+       color:var(--ink);font-weight:600}
+  .tab:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+  .panel{padding:1.75rem 0 3rem}
+  .panel[hidden]{display:none}
+
+  .drop{border:2px dashed var(--line);border-radius:.7rem;background:var(--panel);
+        padding:2.25rem 1.5rem;text-align:center;transition:border-color .15s}
+  .drop.over{border-color:var(--accent);background:var(--accent-soft)}
+  .drop p{margin:.4rem 0;color:var(--muted)}
+  .row{display:flex;gap:.6rem;justify-content:center;flex-wrap:wrap;margin-top:1rem}
+  button.act{padding:.55rem 1.05rem;border-radius:.4rem;border:1px solid var(--line);
+       background:var(--panel);color:var(--ink);font:inherit;font-size:.9rem;cursor:pointer}
+  button.act.primary{background:var(--accent);color:var(--bg);border-color:var(--accent)}
+  button.act:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+
+  .verdict{margin:1.5rem 0 0;border-radius:.6rem;padding:1.1rem 1.25rem;
+           border:1px solid var(--line);background:var(--panel)}
+  .verdict h2{margin:0 0 .3rem;font-size:1.15rem}
+  .verdict.ok{background:var(--good-soft);border-color:var(--good)}
+  .verdict.bad{background:var(--bad-soft);border-color:var(--bad)}
+  .verdict.warn{background:var(--warn-soft);border-color:var(--warn)}
+  .verdict p{margin:.35rem 0 0;font-size:.93rem}
+
+  .checks{margin:1.25rem 0 0;border:1px solid var(--line);border-radius:.6rem;
+          overflow:hidden;background:var(--panel)}
+  .chk{display:grid;grid-template-columns:5.2rem 1fr;gap:.9rem;padding:.7rem .95rem;
+       border-bottom:1px solid var(--line);align-items:baseline}
+  .chk:last-child{border-bottom:none}
+  .tag{font-family:var(--mono);font-size:.72rem;letter-spacing:.06em;
+       padding:.15rem .45rem;border-radius:.25rem;text-align:center;font-weight:600}
+  .tag.pass{background:var(--good-soft);color:var(--good)}
+  .tag.fail{background:var(--bad-soft);color:var(--bad)}
+  .tag.skip{background:var(--warn-soft);color:var(--warn)}
+  .chk b{font-weight:600;font-size:.93rem}
+  .chk span{display:block;color:var(--muted);font-size:.85rem}
+
+  dl.meta{display:grid;grid-template-columns:auto 1fr;gap:.35rem 1rem;margin:1.25rem 0 0;
+          font-size:.9rem}
+  dl.meta dt{color:var(--muted);font-family:var(--mono);font-size:.8rem}
+  dl.meta dd{margin:0;font-family:var(--mono);word-break:break-all}
+
+  .quote{margin:2.25rem 0 0;border-left:3px solid var(--accent);padding:.2rem 0 .2rem 1rem;
+         color:var(--muted);max-width:40rem}
+  .quote i{font-style:italic;color:var(--ink)}
+  .quote small{display:block;margin-top:.25rem;font-size:.8rem}
+
+  h2.sec{font-size:1.15rem;margin:2rem 0 .5rem}
+  h3{font-size:1rem;margin:1.4rem 0 .35rem}
+  p.note{color:var(--muted);max-width:44rem}
+  ul{max-width:44rem;padding-left:1.15rem}
+  li{margin-bottom:.4rem}
+  li::marker{color:var(--accent)}
+  code{font-family:var(--mono);font-size:.88em;background:var(--accent-soft);
+       padding:.08em .32em;border-radius:.2rem}
+  pre{background:var(--panel);border:1px solid var(--line);border-radius:.5rem;
+      padding:.85rem 1rem;overflow-x:auto;font-family:var(--mono);font-size:.82rem}
+  .err{color:var(--bad);font-family:var(--mono);font-size:.85rem;margin-top:1rem}
+  footer{padding:2rem 0 3rem;border-top:1px solid var(--line);color:var(--muted);
+         font-size:.85rem}
+</style>
+</head>
+<body>
+
+<header>
+  <div class="wrap">
+    <div class="brand">
+      <svg viewBox="0 0 64 64" aria-hidden="true">
+        <g fill="none" stroke="currentColor" stroke-linecap="round">
+          <circle cx="32" cy="32" r="29" stroke-width="1.5" opacity=".22"
+                  stroke-dasharray="128 34" transform="rotate(-24 32 32)"/>
+          <circle cx="32" cy="32" r="24" stroke-width="1.75" opacity=".34"
+                  stroke-dasharray="104 30" transform="rotate(66 32 32)"/>
+          <circle cx="32" cy="32" r="19" stroke-width="2" opacity=".52"
+                  stroke-dasharray="86 22" transform="rotate(160 32 32)"/>
+          <circle cx="32" cy="32" r="14.5" stroke-width="2.25" opacity=".72"
+                  stroke-dasharray="70 18" transform="rotate(-100 32 32)"/>
+        </g>
+        <circle cx="32" cy="32" r="9" fill="currentColor"/>
+      </svg>
+      <div>
+        <h1>Verify a receipt</h1>
+        <div class="sub">heartwood/0.3 · runs entirely in your browser</div>
+      </div>
+    </div>
+    <p class="lede">Drop a receipt below and this page re-checks it. <b>Nothing
+    is uploaded and nothing is stored</b> — there is no server here, and the
+    file never leaves your machine. View source if you'd rather confirm that
+    than take our word for it.</p>
+
+    <div class="tabs" role="tablist">
+      <button class="tab" id="t-verify" role="tab" aria-selected="true"
+              aria-controls="p-verify">Verify</button>
+      <button class="tab" id="t-learn" role="tab" aria-selected="false"
+              aria-controls="p-learn">What each check means</button>
+    </div>
+  </div>
+</header>
+
+<main class="wrap">
+
+<section class="panel" id="p-verify" role="tabpanel" aria-labelledby="t-verify">
+  <div class="drop" id="drop">
+    <p><strong>Drop a receipt here</strong></p>
+    <p>or</p>
+    <div class="row">
+      <button class="act primary" id="pick">Choose a file…</button>
+      <button class="act" id="demo">Load a published receipt</button>
+    </div>
+    <input type="file" id="file" accept=".json,application/json" hidden>
+  </div>
+  <div id="err" class="err" hidden></div>
+  <div id="out" hidden>
+    <div class="verdict" id="verdict"></div>
+    <div class="checks" id="checks"></div>
+    <dl class="meta" id="meta"></dl>
+  </div>
+
+  <p class="quote"><i>“Trusted third parties are security holes.”</i>
+  <small>Nick Szabo, 2001. Heartwood's whole design follows from taking that
+  seriously: you should not have to trust the auditor either, which is why this
+  page recomputes rather than reports.</small></p>
+</section>
+
+<section class="panel" id="p-learn" role="tabpanel" aria-labelledby="t-learn" hidden>
+  <h2 class="sec">What is a receipt?</h2>
+  <p class="note">A record of an audit that asked whether an AI endpoint really
+  spent the compute it billed for. It contains the seed that regenerates every
+  question, a hash committing to those questions, the public random beacon that
+  chose which ones were used, every response, and the resulting verdict.</p>
+  <p class="note">The point of the format is that <strong>you do not have to
+  trust whoever produced it.</strong> Everything in it can be recomputed.</p>
+
+  <h2 class="sec">The eight checks</h2>
+  <ul>
+    <li><b>Well formed</b> — the receipt is structurally valid and within sane
+    bounds. A receipt is a file a stranger hands you, so it gets treated as
+    hostile input.</li>
+    <li><b>Pool commitment</b> — regenerate all the questions from the seed and
+    confirm they hash to the committed value. Defeats swapping in a different
+    set of questions after the fact.</li>
+    <li><b>Beacon selection</b> — recompute which questions were used, from the
+    public beacon. Defeats cherry-picking and reordering.</li>
+    <li><b>Response hashes</b> — every stored response still hashes to its
+    recorded digest. Defeats editing what the endpoint said.</li>
+    <li><b>Regrading</b> — re-mark every response from its text. Defeats
+    flipping a right answer to wrong or the reverse.</li>
+    <li><b>Bet matches plan</b> — the wager was the one committed in advance,
+    not one tuned after seeing the outcomes.</li>
+    <li><b>Wealth recomputed</b> — the evidence total follows from the graded
+    answers. Defeats inflating the result.</li>
+    <li><b>Verdict consistent</b> — the stated conclusion is the one the
+    evidence actually reaches.</li>
+  </ul>
+
+  <h3>Why this page can only do six of them</h3>
+  <p class="note">Two checks — the pool commitment and the regrading — require
+  regenerating every question and re-marking every answer. That needs the full
+  challenge generators, which live in the Python implementation. This page is
+  honest about the gap rather than quietly passing those checks: they are
+  marked <code>SKIP</code>, never <code>PASS</code>.</p>
+  <pre>python verify.py your_receipt.json --online</pre>
+
+  <h3>The one thing no offline check can tell you</h3>
+  <p class="note">The order of questions is derived from the beacon
+  <em>the receipt itself carries</em>. So these checks prove a receipt is
+  self-consistent — not that its beacon was ever really drawn. An auditor who
+  invents that value chooses the sample; we measured it at 1,017 tries and 0.4
+  seconds to manufacture a false accusation that passes everything. The
+  <code>--online</code> flag fetches the round from the drand chain and settles
+  it. This page tells you when a receipt has not been anchored.</p>
+
+  <h3>Reading the verdict</h3>
+  <ul>
+    <li><b>EFFORT_DEFICIT</b> — evidence crossed the threshold. At α = 0.01, an
+    honest endpoint produces this at most 1 time in 100.</li>
+    <li><b>NO_EVIDENCE_OF_DEFICIT</b> — <em>not</em> a clean bill of health. It
+    means no deficit was demonstrated within the queries spent, at the declared
+    tolerance. Absence of evidence, stated as such.</li>
+    <li><b>B_UNDERPERFORMS_A</b> — a paired audit found one endpoint losing to
+    another that claims the same model.</li>
+  </ul>
+
+  <p class="quote"><i>“Cypherpunks write code.”</i>
+  <small>Eric Hughes, <i>A Cypherpunk's Manifesto</i>, 1993. Heartwood is about
+  accountability rather than privacy — a different object, the same posture:
+  don't ask a powerful counterparty to be trusted, build the thing that checks.</small></p>
+</section>
+
+</main>
+
+<footer class="wrap">
+  <div><a href="./">Heartwood</a> · <a
+    href="https://github.com/zcashsensei/heartwood">source</a> · MIT</div>
+</footer>
+
+<script>
+"use strict";
+/* ---------------------------------------------------------------- tabs -- */
+const tabs = [...document.querySelectorAll('.tab')];
+tabs.forEach(t => t.addEventListener('click', () => {
+  tabs.forEach(o => {
+    const on = o === t;
+    o.setAttribute('aria-selected', on);
+    document.getElementById(o.getAttribute('aria-controls')).hidden = !on;
+  });
+}));
+
+/* ------------------------------------------- portable derivations in JS --
+   This is the payoff of the v0.3 spec: a SECOND implementation, in another
+   language, reproducing the selection order byte for byte. If this page and
+   the Python verifier ever disagree, the spec is not portable and one of them
+   is wrong -- which is exactly the property v0.2 claimed and did not have.  */
+const enc = new TextEncoder();
+const hex = b => [...new Uint8Array(b)].map(x => x.toString(16).padStart(2,'0')).join('');
+
+async function sha256(bytes){ return new Uint8Array(await crypto.subtle.digest('SHA-256', bytes)); }
+
+async function hmacKey(raw){
+  return crypto.subtle.importKey('raw', raw, {name:'HMAC', hash:'SHA-256'}, false, ['sign']);
+}
+
+/* HMAC-SHA256 in counter mode, big-endian 8-byte counter from 0, yielding
+   8-byte words -- matching portable.drbg_stream exactly. */
+async function* drbg(seed){
+  const key = await hmacKey(seed);
+  for (let counter = 0n; ; counter++){
+    const msg = new Uint8Array(8);
+    new DataView(msg.buffer).setBigUint64(0, counter, false);
+    const block = new Uint8Array(await crypto.subtle.sign('HMAC', key, msg));
+    for (let off = 0; off < block.length; off += 8) yield block.slice(off, off + 8);
+  }
+}
+
+const LIMIT = 1n << 64n;
+async function uniformBelow(stream, m){
+  const bound = LIMIT - (LIMIT % m);          // rejection, never modulo alone
+  for(;;){
+    const w = (await stream.next()).value;
+    let v = 0n;
+    for (const b of w) v = (v << 8n) | BigInt(b);
+    if (v < bound) return v % m;
+  }
+}
+
+async function shuffleIndices(seed, n){
+  const idx = [...Array(n).keys()];
+  const stream = drbg(seed);
+  for (let i = n - 1; i > 0; i--){
+    const j = Number(await uniformBelow(stream, BigInt(i + 1)));
+    [idx[i], idx[j]] = [idx[j], idx[i]];
+  }
+  return idx;
+}
+
+async function selectionOrder(commitment, randomness, n){
+  const seed = await sha256(enc.encode(`${commitment}|${randomness}`));
+  return shuffleIndices(seed, n);
+}
+
+/* --------------------------------------------------------- statistics -- */
+const kelly = (p0, p1) => (p0 - p1) / (p0 * (1 - p0));
+function wealthPath(outcomes, p0, lam){
+  const out = []; let w = 0;
+  for (const x of outcomes){ w += Math.log10(1 + lam * (p0 - x)); out.push(w); }
+  return out;
+}
+
+/* ------------------------------------------------------------- verify -- */
+const LEGACY_SHUFFLE = new Set(['heartwood/0.1']);
+
+async function verify(r){
+  const checks = [];
+  const add = (state, name, detail) => checks.push({state, name, detail});
+  const differential = r.kind === 'differential';
+
+  // 1. structure
+  const missing = ['pool','beacon','plan','transcript','result']
+        .filter(k => !r[k] || typeof r[k] !== 'object');
+  if (missing.length){
+    add('fail','Well formed', 'missing or invalid: ' + missing.join(', '));
+    return {checks, fatal:true, differential};
+  }
+  const size = r.pool.size, tr = r.transcript;
+  if (!Array.isArray(tr) || !Number.isInteger(size) || size < 1 || size > 50000){
+    add('fail','Well formed','pool.size out of bounds or transcript not a list');
+    return {checks, fatal:true, differential};
+  }
+  add('pass','Well formed', `${tr.length} queries over a pool of ${size}`);
+
+  // 2. pool commitment -- needs the generators
+  add('skip','Pool commitment','needs the challenge generators; run verify.py');
+
+  // 3. beacon selection
+  const ver = r.version || 'heartwood/0.3';
+  if (LEGACY_SHUFFLE.has(ver)){
+    add('skip','Beacon selection',
+        'v0.1 ordered items with CPython’s RNG, which no other language can '
+        + 'reproduce — the interop bug v0.2 fixed. Use verify.py.');
+  } else if (!r.beacon.randomness){
+    add('fail','Beacon selection','receipt carries no beacon randomness');
+  } else {
+    const order = await selectionOrder(r.pool.commitment, r.beacon.randomness, size);
+    const used = tr.map(t => t.item_id);
+    const ok = used.every((v, i) => order[i] === v);
+    add(ok ? 'pass' : 'fail','Beacon selection',
+        ok ? 'transcript follows the beacon-derived order'
+           : 'transcript does NOT match the beacon-derived order');
+  }
+
+  // 4. response hashes
+  let hashOk = true, n = 0;
+  for (const t of tr){
+    const sides = differential ? ['a','b'] : [''];
+    for (const s of sides){
+      const body = differential ? t['response_'+s] : t.response;
+      const want = differential ? t['response_'+s+'_sha256'] : t.response_sha256;
+      if (typeof body !== 'string'){ hashOk = false; continue; }
+      if (hex(await sha256(enc.encode(body))) !== want) hashOk = false;
+      n++;
+    }
+  }
+  add(hashOk ? 'pass' : 'fail','Response hashes',
+      hashOk ? `${n} responses match their digests` : 'a response was altered');
+
+  // 5. regrading -- needs the generators
+  add('skip','Regrading','needs the challenge generators; run verify.py');
+
+  // 6. bet
+  const p0 = differential ? 0.5 : r.plan.p0;
+  const lam = kelly(p0, r.plan.p1);
+  const lamOk = Math.abs(lam - r.plan.lambda) < 1e-9;
+  add(lamOk ? 'pass' : 'fail','Bet matches plan',
+      lamOk ? `λ = ${lam.toFixed(4)}, the committed Kelly bet`
+            : `λ should be ${lam.toFixed(6)}, receipt says ${r.plan.lambda}`);
+
+  // 7 + 8. wealth and verdict
+  const seq = differential
+    ? tr.filter(t => t.graded_a !== t.graded_b).map(t => t.graded_b ? 1 : 0)
+    : tr.map(t => t.graded);
+  const path = wealthPath(seq, p0, r.plan.lambda);
+  const peak = path.length ? Math.max(...path) : 0;
+  const peakOk = Math.abs(peak - r.result.peak_log10_wealth) < 1e-6;
+  add(peakOk ? 'pass' : 'fail','Wealth recomputed',
+      `evidence 10^${peak.toFixed(2)}` + (peakOk ? '' : ' — receipt disagrees'));
+
+  const thr = Math.log10(1 / r.plan.alpha);
+  let fired = null;
+  for (let i = 0; i < path.length; i++) if (path[i] >= thr){ fired = i + 1; break; }
+  const vOk = fired === (r.result.rejected_at ?? null);
+  add(vOk ? 'pass' : 'fail','Verdict consistent',
+      vOk ? (fired ? `threshold crossed at query ${fired}` : 'threshold never crossed')
+          : 'the stated verdict does not follow from the evidence');
+
+  return {checks, fatal:false, differential, peak, thr};
+}
+
+/* --------------------------------------------------------------- view -- */
+const $ = id => document.getElementById(id);
+
+function render(r, res){
+  const failed = res.checks.filter(c => c.state === 'fail');
+  const skipped = res.checks.filter(c => c.state === 'skip');
+  const v = $('verdict');
+
+  if (failed.length){
+    v.className = 'verdict bad';
+    v.innerHTML = `<h2>This receipt does not hold up</h2>
+      <p>${failed.length} check${failed.length>1?'s':''} failed. It has been
+      altered, or was not produced by a conforming implementation.</p>`;
+  } else {
+    v.className = 'verdict ok';
+    v.innerHTML = `<h2>Consistent — ${res.checks.length - skipped.length}
+      of ${res.checks.length} checks passed here</h2>
+      <p><b>Verdict recorded: ${r.result.verdict}.</b>
+      ${skipped.length ? skipped.length + ' check' + (skipped.length>1?'s':'') +
+        ' need the Python verifier and were not performed — they are marked SKIP below, not PASS. ' : ''}
+      The beacon has <b>not</b> been anchored to the drand chain: that needs a
+      network call, and without it these checks prove self-consistency, not
+      that the beacon was ever drawn. Run
+      <code>python verify.py &lt;file&gt; --online</code> to settle it.</p>`;
+  }
+
+  $('checks').innerHTML = res.checks.map(c =>
+    `<div class="chk"><span class="tag ${c.state}">${c.state.toUpperCase()}</span>
+     <div><b>${c.name}</b><span>${c.detail}</span></div></div>`).join('');
+
+  const rows = [
+    ['version', r.version || '—'],
+    ['kind', res.differential ? 'differential (paired)' : 'absolute'],
+    ['beacon', `${r.beacon.source || '?'} round ${r.beacon.round ?? '?'}`],
+    ['commitment', r.pool.commitment || '—'],
+    ['plan', `p0=${(res.differential?0.5:r.plan.p0)} p1=${r.plan.p1} α=${r.plan.alpha}`],
+  ];
+  if (r.calibration && r.calibration.source)
+    rows.push(['p0 source', r.calibration.source +
+      (r.calibration.source === 'endpoint_self'
+        ? '  ← measured through the endpoint under audit' : '')]);
+  if (r.endpoints)
+    rows.push(['endpoints', `A ${r.endpoints.a?.model||'?'} vs B ${r.endpoints.b?.model||'?'}`]);
+  $('meta').innerHTML = rows.map(([k,val]) =>
+    `<dt>${k}</dt><dd>${String(val).replace(/[<&]/g, c => c==='<'?'&lt;':'&amp;')}</dd>`).join('');
+
+  $('out').hidden = false;
+}
+
+async function load(text){
+  $('err').hidden = true; $('out').hidden = true;
+  let r;
+  try { r = JSON.parse(text); }
+  catch(e){ $('err').textContent = 'That file is not valid JSON: ' + e.message;
+            $('err').hidden = false; return; }
+  try { render(r, await verify(r)); }
+  catch(e){ $('err').textContent = 'Could not verify: ' + e.message;
+            $('err').hidden = false; }
+}
+
+$('pick').addEventListener('click', () => $('file').click());
+$('file').addEventListener('change', async e => {
+  const f = e.target.files[0]; if (f) load(await f.text());
+});
+const drop = $('drop');
+['dragenter','dragover'].forEach(ev => drop.addEventListener(ev, e => {
+  e.preventDefault(); drop.classList.add('over'); }));
+['dragleave','drop'].forEach(ev => drop.addEventListener(ev, e => {
+  e.preventDefault(); drop.classList.remove('over'); }));
+drop.addEventListener('drop', async e => {
+  const f = e.dataTransfer.files[0]; if (f) load(await f.text());
+});
+$('demo').addEventListener('click', async () => {
+  const url = 'https://raw.githubusercontent.com/zcashsensei/heartwood/main/'
+            + 'evidence/v0.3/haiku_receipt_hollow.json';
+  try {
+    const res = await fetch(url);
+    if (!res.ok) throw new Error('HTTP ' + res.status);
+    load(await res.text());
+  } catch(e){
+    $('err').textContent = 'Could not fetch the sample receipt (' + e.message
+      + '). Download one from the repository and drop it here instead.';
+    $('err').hidden = false;
+  }
+});
+</script>
+</body>
+</html>
