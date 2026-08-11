@@ -1,0 +1,95 @@
+name: verify
+
+# Everything here runs with no third-party dependencies and no network access.
+# That is deliberate: the whole claim of the project is that a receipt can be
+# rechecked by anyone, cold, with a stock Python. CI proves that on every push
+# rather than asserting it in the README.
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        python-version: ["3.10", "3.11", "3.12", "3.13"]
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python-version }}
+
+      - name: Test suite
+        run: python tests.py
+
+      - name: Ground truth re-derived by an independent parser
+        run: python verify_truth.py
+
+      - name: Cross-language test vectors are stable
+        run: |
+          python - <<'PY'
+          import json, portable
+          live = portable.test_vectors()
+          shipped = json.load(open("evidence/v0.3/test_vectors.json"))
+          assert live == shipped, "published test vectors drifted from code"
+          print("test vectors match:", len(live["selection"]), "selection,",
+                len(live["item_stream"]), "item-stream")
+          PY
+
+      - name: Every published receipt verifies
+        run: |
+          python - <<'PY'
+          import glob, json, heartwood as H
+          files = sorted(glob.glob("evidence/receipt_*.json")
+                         + glob.glob("evidence/*/*receipt*.json"))
+          assert files, "no receipts found"
+          bad = []
+          for f in files:
+              r = json.load(open(f))
+              v = H.verify_receipt(r)
+              print(f"{r['version']}  {f}  valid={v['valid']}")
+              if not v["valid"]:
+                  bad.append((f, v["checks"]))
+          assert not bad, f"receipts failed verification: {bad}"
+          print(f"{len(files)}/{len(files)} receipts verify")
+          PY
+
+      - name: Adversary suite catches every in-scope forgery
+        run: |
+          for r in evidence/receipt_hollow.json \
+                   evidence/frontier/opus5_receipt_hollow.json \
+                   evidence/v0.3/haiku_receipt_hollow.json; do
+            echo "--- $r"
+            python adversary.py "$r" | grep -E "IN-SCOPE|MISSED"
+            python adversary.py "$r" | grep -q "MISSED" && exit 1
+          done
+          echo "no in-scope forgery slipped through"
+
+      - name: Preprint figures match the receipts
+        run: python paper/check_paper.py
+
+      # The verifier is the program that reads files from strangers, so it is
+      # attacked here too. Exits 0 on the findings already documented in
+      # THREAT_MODEL.md and non-zero only on NEW ones -- a check that is
+      # permanently red gets ignored, which is worse than no check.
+      - name: Security suite finds nothing new
+        run: python security_test.py
+
+      # The grading layer must be EXACT: an error there is not noise, it is a
+      # directional bias the statistics faithfully amplify into a confident
+      # verdict. Re-grades every published response independently.
+      - name: Grader agrees on every published response
+        run: python grading_audit.py
+
+      # Every number stated in the docs is COMPUTED here and compared. Counts
+      # have drifted five times; four of those slipped past earlier versions
+      # of this guard, so it runs on every push rather than before releases.
+      - name: Stated counts match the code
+        run: python check_counts.py
