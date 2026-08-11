@@ -708,6 +708,24 @@ try:
     check("garbage budget falls back to the default",
           UI.clamp("; rm -rf /", 1, UI.MAX_QUERIES, 60) == 60)
     check("concurrent audits are capped", UI.MAX_CONCURRENT_RUNS <= 4)
+
+    # DNS rebinding: the token cannot defend against it, because a rebound page
+    # is genuinely same-origin by the browser's rules and can read "/" -- token
+    # and all -- straight out of the HTML. The Host header is what survives,
+    # since the browser still sends the attacker's domain after rebinding.
+    import http.client
+    for host, expect in (("127.0.0.1", 200), ("evil.example.com", 403),
+                         ("bank.attacker.io", 403)):
+        conn = http.client.HTTPConnection("127.0.0.1", _ui_port, timeout=8)
+        conn.request("GET", "/", headers={"Host": f"{host}:{_ui_port}"})
+        r = conn.getresponse()
+        body = r.read()
+        conn.close()
+        check(f"rebinding: Host {host} -> {expect}", r.status == expect,
+              f"got {r.status}")
+        if expect == 403:
+            check(f"rebinding: Host {host} leaks no token",
+                  b"const TOKEN" not in body)
 finally:
     _srv.shutdown()
     _srv.server_close()

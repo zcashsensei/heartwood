@@ -216,6 +216,19 @@ class Handler(BaseHTTPRequestHandler):
         self.end_headers()
         self.wfile.write(data)
 
+    def _host_ok(self) -> bool:
+        """Reject DNS rebinding.
+
+        The session token stops a cross-origin page driving this, but not a
+        rebound one: an attacker re-points their own domain at 127.0.0.1, the
+        browser then treats their page as SAME-ORIGIN, and their script can
+        fetch "/" and read the token out of the HTML. The Host header is what
+        survives -- after rebinding the browser still sends the attacker's
+        domain, never 127.0.0.1.
+        """
+        host = (self.headers.get("Host") or "").split(":")[0].strip("[]")
+        return host in ("127.0.0.1", "localhost", "::1", "")
+
     def _authorised(self):
         """Reject anything a page on another origin could have sent.
 
@@ -232,6 +245,8 @@ class Handler(BaseHTTPRequestHandler):
         return secrets.compare_digest(supplied, TOKEN)
 
     def do_GET(self):
+        if not self._host_ok():
+            return self._send(403, "forbidden", "text/plain")
         path = self.path.split("?", 1)[0]
         if path in ("/", "/index.html"):
             return self._send(200, PAGE.replace("__TOKEN__", TOKEN))
@@ -251,6 +266,8 @@ class Handler(BaseHTTPRequestHandler):
         self._send(404, "not found", "text/plain")
 
     def do_POST(self):
+        if not self._host_ok():
+            return self._send(403, "forbidden", "text/plain")
         if self.path.split("?", 1)[0] != "/run":
             return self._send(404, "not found", "text/plain")
         if not self._authorised():
