@@ -6,6 +6,7 @@
 
 <br clear="left">
 
+[![verify](https://github.com/zcashsensei/heartwood/actions/workflows/verify.yml/badge.svg)](https://github.com/zcashsensei/heartwood/actions/workflows/verify.yml)
 [![licence: MIT](https://img.shields.io/badge/licence-MIT-blue.svg)](LICENSE)
 [![spec: heartwood/0.3](https://img.shields.io/badge/spec-heartwood%2F0.3-9a4a1e.svg)](SPEC.md)
 [![site](https://img.shields.io/badge/site-zcashsensei.github.io%2Fheartwood-informational.svg)](https://zcashsensei.github.io/heartwood/)
@@ -21,6 +22,9 @@ receipt it came from.
 ```bash
 python tests.py && python verify_truth.py && python paper/check_paper.py
 ```
+
+Every push runs all of it on a clean machine against Python 3.10–3.13 — the
+badge above is that job, not a claim about it.
 
 > Hollow-LLM shows the trunk can be empty. Heartwood proves it is solid.
 
