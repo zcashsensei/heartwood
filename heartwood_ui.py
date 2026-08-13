@@ -599,10 +599,16 @@ def main():
         url = f"http://127.0.0.1:{PORT}"
         print(f"Heartwood control panel: {url}")
         print("Bound to localhost only. Ctrl-C to stop.")
-        try:
-            webbrowser.open(url)
-        except Exception:
-            pass
+        # Interactive launches only — a supervised restart must not steal focus with a
+        # browser tab. Under pythonw with redirected output stdout is not a tty, so no
+        # tab opens; from a terminal it behaves as before. See the same guard in
+        # hl_trader/dashboard.py (2026-08-13).
+        _interactive = bool(getattr(sys.stdout, "isatty", lambda: False)())
+        if "--no-open" not in sys.argv and ("--open" in sys.argv or _interactive):
+            try:
+                webbrowser.open(url)
+            except Exception:
+                pass
         try:
             srv.serve_forever()
         except KeyboardInterrupt:
